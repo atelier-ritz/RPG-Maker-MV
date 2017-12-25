@@ -6,7 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
-// 1.0.1
+// 1.0.0 2017/12/24 First Version.
 // 0.0.1 2017/12/12 Start development.
 // ----------------------------------------------------------------------------
 // [Twitter]: https://twitter.com/atelier_ritz
@@ -14,135 +14,242 @@
 //=============================================================================
 
 /*:
- * @plugindesc Create galgame style events by reading .txt scripts.
+ * @plugindesc Creating galgame-style events from .txt format scripts.
  * @author atelier_ritz
  *
- *
  * @param MessageFormat
- * @desc Change the indent, character per line, etc.
+ * @desc [LEAVE THIS BLANK]
  * @default
  * @param characterPerLine
- * @desc Number of characters per line (including indent spaces)
+ * @desc Number of characters per line. This includes indent spaces.
  * @type number
  * @default 27
  * @parent MessageFormat
  * @param nameIndent
- * @desc The indent (# of spaces) before name
+ * @desc The indent (number of spaces) before a character's name.
  * @type number
- * @default 4
+ * @default 3
  * @parent MessageFormat
  * @param textIndent
- * @desc The indent (# of spaces) before each line
+ * @desc The indent (number of spaces) before each line.
  * @type number
- * @default 4
+ * @default 5
  * @parent MessageFormat
  * @param specialCharacters
- * @desc These characters will follow the last character even exceeding the characterPerLine.
+ * @desc These characters will follow the last character even if characterPerLine is reached.
  * @type text
  * @default "%),:;]}｡｣ﾞﾟ。，、．：；゛゜ヽヾゝゞ々’”）〕］｝〉》」』】°′″℃￠％‰"
  * @parent MessageFormat
  * @param characterTextColor
- * @desc Set the color of name and text for main characters. NameColorId, TextColorId, CharacterName.
+ * @desc Set the color presets for main characters. Example: NameColorId, TextColorId, CharacterName.
  * @type struct<CharaColorPreset>
+ * @default {"Preset0":"21,21,れいむ","Preset1":"27,27,れみりあ","Preset2":""}
  * @parent MessageFormat
  *
  * @param WindowSetting
- * @desc Change the message box swtting.
+ * @desc [LEAVE THIS BLANK]
  * @param windowType
- * @desc 0:normal, 1:black, 2:transparent
+ * @desc 0:normal, 1:black, 2:transparent. (default: 2)
  * @type Nnumber
- * @default 0
+ * @default 2
  * @parent WindowSetting
  * @param windowPosition
- * @desc 0:top, 1:mid, 2:bottom
+ * @desc 0:top, 1:mid, 2:bottom. (default: 2)
  * @type number
  * @default 2
  * @parent WindowSetting
+ * @param windowPicName
+ * @desc If windowType = 2, you can use an image as a message box. Call it with ＠msgbox in the script. (default: msgbox, this will read img/pictures/msgbox.png)
+ * @type text
+ * @default msgbox
+ * @parent WindowSetting
+ * @param windowPicPositionX
+ * @desc Set the X position of the message box image. (Recommended: center x of the game)
+ * @type number
+ * @default 408
+ * @parent WindowSetting
+ * @param windowPicPositionY
+ * @desc Set the Y position of the message box image. (Recommended: center y of the game)
+ * @type number
+ * @default 312
+ * @parent WindowSetting
  *
  * @param GraphicSetting
- * @desc Picture ID, positions of the graphics
+ * @desc [LEAVE THIS BLANK]
  * @param charaPicIdStartFrom
- * @desc if set to 10, character id is assigned to 10, 11, 12, ...
+ * @desc If set to 10, a new character image is assigned to 10, 11, 12, ... (default: 10)
  * @type number
  * @default 10
  * @parent GraphicSetting
  * @param bgPicIdStartFrom
- * @desc if set to 10, backgrounf id is assigned to 5 and 6
+ * @desc If set to 5, background image will use picture ID 5 and 6. (default: 5)
  * @type number
  * @default 5
  * @parent GraphicSetting
- * @param PositionPresets
- * @desc Presets of character graphic positions. Anchor point is at the center of the image. Example pos=0 -> 120(x),300(y),r(presetName).
+ * @param msgboxPicIdStartFrom
+ * @desc If set to 80, message box image will use picture ID 80. (default: 80)
+ * @type number
+ * @default 80
+ * @parent GraphicSetting
+ * @param positionPresets
+ * @desc Presets of character graphic positions.Example: xPosition, yPosition, presetName.
  * @type struct<PositionPreset>
+ * @default {"Preset0":"430,430,center","Preset1":"80,430,left","Preset2":"630,430,right"}
  * @parent GraphicSetting
  * @param defaultCharaFadeFrame
- * @desc default wait framws when characters show up / disppear
+ * @desc default number of frames at characters transitions
  * @type number
  * @default 20
  * @parent GraphicSetting
  * @param defaultBgFadeFrame
- * @desc default wait framws when background show up / disppear
+ * @desc default number of frames at background transitions
  * @type number
- * @default 10
+ * @default 30
+ * @parent GraphicSetting
+ * @param defaultMsgboxFadeFrame
+ * @desc default number of frames at message box transitions
+ * @type number
+ * @default 30
  * @parent GraphicSetting
  * @param defaultSceneFadeFrame
- * @desc default wait framws when scene fadein / fadeout
+ * @desc default number of frames of screen fadeIn / fadeOut command
  * @type number
  * @default 60
  * @parent GraphicSetting
  *
+ * @param SoundSetting
+ * @desc [LEAVE THIS BLANK]
+ * @param voiceVolume
+ * @desc default volume of voice audio files. (default: 100)
+ * @type number
+ * @default 100
+ * @parent SoundSetting
  *
  * @help ツクールMVでギャルゲー風会話システムを作るプラグインです。
- * このプラグインはプロジェクトフォルダ/Scenarioの下の.txtファイルを読み込むことで、
- * 文字、bgm、bgs、ME、SE、立ち絵など様々な演出を可能にします。
- * 快適な開発支援のために以下の機能を提供します。
+ * 専門ソフトの凝った演出よりも、ツクールMVのデフォルト機能を使用した扱いやすさ
+ * をコンセプトにしています。最低限に以下の事した後、プラグインコマンドで「AdvLoad シナリオファイル名」で使えます。
+ * シナリオファイルを<project>/scenario/に放り込む。
+ * 画像ファイルを<project>/img/picturesに放り込む。
+ * （あったら）ボイスファイルを<project>/audio/voiceに放り込む。
  *
- * 1.
+ *　説明を読むよりも付属しているシナリオファイルを見た方が速いと思います。
  *
- * 2.
  *
- * Roadmap: play SE, change face in the middle of a text.
- * window closes when chaing characters
- * put latest character to the front
- * label jump
- * stop previous voice
- * one chara mode
- * Choices
- * picture window
- * motion (jump syutyusen)
- * variables & switch
- * condition branch
- * layout collapse when font enlarged
- * name/text font
- * make neater adjustTextLayout
+ *
+ *
+ * 【シナリオ読み込み】
+ *  <プロジェクトフォルダ>/scenario/の下に、fileName.txt置きます。プラグインコ
+ *  マンドで「AdvLoad fileName」を記入すれば、スクリプトを実行します。
+ * 【メッセージ関連】
+ * 1.＠で始まるコマンドは一行に一つだけ。使用可能なコマンドは＠bgm、＠bgs、＠me、
+ *   ＠se、＠chara、＠bg、＠msgbox、 *   ＠choice、＠jump、＠end、＠insert、
+ *   ＠wait、＠fadein、＠fadeout。これらは覚えなくてもいいです：＠clearStack、
+ *   ＠clearPicCache、＠voice、＠endg。関数macroRun()で追加することもできます。
+ *   関数macroChange()でマクロコマンドを定義することが可能です。
+ * 2.スクリプトの最後には必ず＠endを記入してください。これは使用したピクチャなど
+ *   を削除するコマンドです。
+ * 3.ナレーションと会話の2種類をサポートし、インデントを別々に調整しています（プ
+ *   ラグインマネジャーで変更可）。デフォルトでは
+ *   会話文に「」を含むのを想定して、少しずらしています。例はサンプル参照。
+ * 【ボイス関連】
+ * 1.キャラクターセリフと同時にボイスを再生できます。記入方法は[キャラクター名/ボ
+ *   イスファイル名]「セリフ…」です。ボイスの再生はseを使用していますが、もしほか
+ *   のボイスを再生中の場合それを止めて、新しいボイスだけを再生します。ボイスは
+ *   audio/voice/フォルダ下においてください。
+ * 【キャラクター表示関連】
+ *  1.＠chara f=name 最低限これさえ記入すれば、img/pictures/name.pngを画面の真
+ *    ん中に出現させます。f=name＠faceと記入すれば、もし名前がnameというキャラク
+ *    ターが既に表示されていた場合、位置情報などを引き継いでグラフィックだけを変え
+ *    ることができます。一つのキャラクターにたくさんの表情パターンがある場合使います。
+ *  2.＠chara f=name＠face x=300 y=200 opacity=150 t=30　name＠face.pngを[x,y]
+ *    位置に、透明度150にし、30フレームかけて移動します。
+ *  3.＠chara f=name＠face pos=presetName name＠face.pngをプラグインマネジャーに
+ *		設定した位置に移動させます。
+ *  4.＠chara f=name＠face dx=40 name＠face.pngを右に40ピクセル移動させます。時
+ *		間は指定されていないので、プラグインマネジャーのdefaultCharaFadeFrameを使います。
+ *  5.＠chara f=name＠ name＠face.pngを退場させます。
+ * 【背景関連】
+ *  1.＠bg f=fileName t=30　背景img/pictures/fileName.pngを30フレームかけて表示
+ *		します。時間を指定しなければ、プラグインマネジャーのdefaultBgFadeFrameを使います。
+ *  2.背景が既に表示されている場合＠bg f=fileName2で背景をすり替えます。デフォルト
+ *		では一枚しか背景を表示できない仕様になっています。
+ *  3.＠bg　で背景を消去します。
+ *  【サウンド関連】
+ *  1.＠bgm(＠bgs ＠me ＠se) f=fileName pitch=90 vol=100　でサウンド再生します。pitch
+ *		とvolは省略可能。
+ *  2.＠bgm t=2000 で2秒かけてbgmをフェードアウトします。
+ * 【ラベルジャンプ】
+ *  1.*labelでラベルを定義できます。
+ *  2.＠jump f=*label と記入することで、*labelに飛びます。ただし、上へ飛ぶことはできない。
+ *  【他のスクリプトファイルを挿入】
+ *  1.＠insert f=scriptName2　で、現在実行してるスクリプトの前に、scenario/scriptName2
+ *		の内容を丸々挿入できます。scriptName2実行後元々のスクリプトを中断したところで再開します。
+ * 【選択肢】
+ *  1. ＠choice s1=選択肢表示内容A/*label1 s2=選択肢表示内容B/*label2 s3=選択肢表示内容C/*label3 ... （最大s6まで） default=0 cancel=-1
+ *  2. 以上の記入で、<選択肢表示内容A>を選択した場合*label1に飛ぶ、という処理をしています。
+ *			defaultタグとcancelタグは省略可能で、デフォルトカーソル位置、キャンセル可能かなどの設定。
+ *  	 default : 0->None, 1-6>Choice ID 1-6, cancel  :-2->branch,-1->disallow, 0-5->Choice ID 1-6
+ *  【実装されてない機能】
+ *  1.最後に表示されたキャラクターを一番前に置く機能。キャラクターが重なるシチュエーション
+ *		が多くないと判断したので。
+ *  2.バックログやウィンドウの消去。
+ *  3.画像の拡大縮小。
+ *　4.変数操作、スイッチ操作、条件分岐。
+ *  5.フォント変更。
+ *  6.使用グラフィックのプリロード。新しい画像を表示する際、カクッとなります。
  * This plugin is released under the MIT License.
  */
 
  /*~struct~CharaColorPreset:
  * @param Preset0
  * @type text
- * @default 2,3,ハロルド
  * @param Preset1
  * @type text
- * @default
  * @param Preset2
  * @type text
- * @default
+ * @param Preset3
+ * @type text
+ * @param Preset4
+ * @type text
+ * @param Preset5
+ * @type text
+ * @param Preset6
+ * @type text
+ * @param Preset7
+ * @type text
+ * @param Preset8
+ * @type text
+ * @param Preset9
+ * @type text
+ * @param Preset10
+ * @type text
  */
  /*~struct~PositionPreset:
  * @param Preset0
  * @type text
- * @default 580,540,m
  * @param Preset1
  * @type text
- * @default 880,540,r
  * @param Preset2
  * @type text
- * @default 380,540,l
+ * @param Preset3
+ * @type text
+ * @param Preset4
+ * @type text
+ * @param Preset5
+ * @type text
+ * @param Preset6
+ * @type text
+ * @param Preset7
+ * @type text
+ * @param Preset8
+ * @type text
+ * @param Preset9
+ * @type text
+ * @param Preset10
+ * @type text
  */
 
 (function() {
-		// 'use strict';
 		const pluginName = 'RitzAdv';
 
     //=============================================================================
@@ -158,6 +265,7 @@
     // Parameters obtained from the plugin manager
     //=============================================================================
 		const myParameters 						= PluginManager.parameters(pluginName);
+
 		const paramNumCharPerLine 		= Number(myParameters['characterPerLine']);
 		const paramNameIndent 				= Number(myParameters['nameIndent']);
 		const paramTextIndent 				= Number(myParameters['textIndent']);
@@ -165,12 +273,19 @@
 		const paramCharaTextColor			= JSON.parse(myParameters['characterTextColor']);
 		const paramWindowType 				= Number(myParameters['windowType']);
 		const paramWindowPosition   	= Number(myParameters['windowPosition']);
-		const paramPosPreset					= JSON.parse(myParameters['PositionPresets']);
+		const paramWindowPicName		 	= String(myParameters['windowPicName']);
+		const paramWindowDefPosX	   	= Number(myParameters['windowPicPositionX']);
+		const paramWindowDefPosY	   	= Number(myParameters['windowPicPositionY']);
+		const paramPosPreset					= JSON.parse(myParameters['positionPresets']);
 		const paramCharaPicIdBase			= Number(myParameters['charaPicIdStartFrom']);
 		const paramBgPicIdBase				= Number(myParameters['bgPicIdStartFrom']);
+		const parammsgboxPicIdBase		= Number(myParameters['msgboxPicIdStartFrom']);
 		const paramCharaFadeFrame 		= Number(myParameters['defaultCharaFadeFrame']);
 		const paramBgFadeFrame 				= Number(myParameters['defaultBgFadeFrame']);
+		const paramMsgboxFadeFrame  	= Number(myParameters['defaultMsgboxFadeFrame']);
 		const paramSceneFadeFrame 		= Number(myParameters['defaultSceneFadeFrame']);
+		const paramVoiceVolume		 		= Number(myParameters['voiceVolume']);
+
 
 		//***************************************************************
 		// ADV_System
@@ -179,45 +294,40 @@
 				this.initialize.apply(this, arguments);
 		}
 
-		ADV_System.NAME_INDENT 				= new Array(paramNameIndent + 1).join(' ');
-		ADV_System.TEXT_INDENT 				= new Array(paramTextIndent + 1).join(' ');
-		;
-		ADV_System.SCENARIO_PREFIX 		= "\n";
-		ADV_System.SCENARIO_SUFFIX 		= "\n@chara\n@bg\n@clearPicCache";
+		ADV_System.NAME_INDENT 								= new Array(paramNameIndent + 1).join(' ');
+		ADV_System.TEXT_INDENT 								= new Array(paramTextIndent + 1).join(' ');
+		ADV_System.TEXT_COLOR_PRESET_NAME 		= [];
+		ADV_System.TEXT_COLOR_PRESET_VALUE 		= [];
+		ADV_System.POS_PRESET_NAME 						= [];
+		ADV_System.POS_PRESET_VALUE 					= [];
 
-		ADV_System.TEXT_COLOR_PRESET_NAME = [];
-		ADV_System.TEXT_COLOR_PRESET_VALUE = []; // namecolor, textcolor
-		for(var key in paramCharaTextColor){
-				var temp = paramCharaTextColor[key].split(',');
-				ADV_System.TEXT_COLOR_PRESET_NAME.push(temp[2]);
-				ADV_System.TEXT_COLOR_PRESET_VALUE.push([temp[0],temp[1]]);
-		}
-
-		ADV_System.POS_PRESET_NAME = [];
-		ADV_System.POS_PRESET_VALUE = [];
-		for(var key in paramPosPreset){
-				var temp = paramPosPreset[key].split(',');
-				ADV_System.POS_PRESET_NAME.push(temp[2]);
-				ADV_System.POS_PRESET_VALUE.push([temp[0],temp[1]]);
-		}
 
 		ADV_System.prototype.initialize = function(){
-				this.mStack = [];
-				this.mRun = false;
-				this.mWaitMode = ''; 			// wait type
-				this.mWaitData = null;		// 判定時に使うデータ
-				this.mWaitCount = 0;			// 終了待ちが時間指定の場合
-				this.mWindowBack = paramWindowType;			// テキスト表示枠
-				this.mWindowPos = paramWindowPosition;			// テキスト表示場所
-				this.mSelectList = [];		// 選択肢のリスト
-				this.mViewPictId = -1;
+				this.mStack 						= [];
+				this.mRun 							= false;
+				this.mWaitMode 					= '';
+				this.mWaitData 					= null;		// 判定時に使うデータ
+				this.mWaitCount 				= 0;			// 終了待ちが時間指定の場合
+				this.mWindowPicEnabled 	= false;
+				this.mViewPictId 				= -1;
 				//graphics
-				this.mPicIdInUse = []; 				// id -> boolean, true if in use
+				this.mPicIdInUse 				= [];
 				//characterGraphic
-				this.mActiveActors 		 = [];   // active actors on the screen
-				this.mActiveActorsInfo = []; // imageId, name, xPos, yPos
-				//bgGraphic  -1: not in use, 0:picId = paramBgPicIdBase, 1:picId = paramBgPicIdBase+1
-				this.mActiveBgIndex		 = -1;
+				this.mActiveActors 		 	= [];   // names of active actors on the screen
+				this.mActiveActorsInfo 	= []; 	// imageId, name, xPos, yPos
+				this.mActiveBgIndex			= -1;		// active bg pic id offset. DO NOT change.
+
+				for(var key in paramCharaTextColor){
+						var temp = paramCharaTextColor[key].split(',');
+						ADV_System.TEXT_COLOR_PRESET_NAME.push(temp[2]);
+						ADV_System.TEXT_COLOR_PRESET_VALUE.push([Number(temp[0]),Number(temp[1])]);
+				}
+
+				for(var key in paramPosPreset){
+						var temp = paramPosPreset[key].split(',');
+						ADV_System.POS_PRESET_NAME.push(temp[2]);
+						ADV_System.POS_PRESET_VALUE.push([Number(temp[0]),Number(temp[1])]);
+				}
 
 		};
 
@@ -226,38 +336,34 @@
 		//***************************************************************
 		// load .txt file and store the converted commands at this.mStack
 		ADV_System.prototype.loadScript = function(filename,reset) {
-				// reset = false when label jump is used
 				if(reset === undefined) reset = true;
 				if(reset) this.resetStack();
-				// read scenario file
 				var fs = require('fs');
-				var filepath = this.localFileDirectoryPath()+filename+'.txt';
+				var filepath = this.localFileDirectoryPath() + filename + '.txt';
 				var file_data = fs.readFileSync(filepath, 'utf-8');
-				//clear character and background graphics at the end
-				file_data = ADV_System.SCENARIO_PREFIX + file_data + ADV_System.SCENARIO_SUFFIX;
-				var s_list = file_data.split('\n');
+				var commandList = file_data.split('\n');
 				var new_stack = [];
-				// stack by the line
-				for(var i=0, len=s_list.length; i<len; i++){
-						var text = s_list[i];
-						// empty
+				for(var i=0, len=commandList.length; i<len; i++){
+						var text = commandList[i];
+						var add_stack = [];
 						text = this.chomp(text);
 						text = text.trim();
-						if( text.trim() == "" || text.trim() == '\r' ) continue;
+						// empty
+						if(text.trim() == "" || text.trim() == '\r') continue;
 						// comments
-						if( text.charAt(0) == ';' ) continue;
-						var add_stack = [];
-						// commands
-						if( text.charAt(0) == '@' ){					//macro
+						if(text.charAt(0) == ';') continue;
+						//macro
+						if(text.charAt(0) == '@'){
 								add_stack = this.macroChange(this.chomp(text));
-						}else if( text.charAt(0) == '*' ){	// ラベル
+						//label
+						}else if(text.charAt(0) == '*'){
 								add_stack = this.macroChange(this.chomp(text));
-						}else{															// テキスト
+						// text
+						}else{
 								var add_text = text;
-								//[name/voiceFileName] -> play se
-								if( add_text.indexOf('/') != -1 ){
+								if(add_text.indexOf('/') != -1){
 										var voiceFileName = add_text.slice(add_text.indexOf('/')+1,add_text.indexOf(']'));
-										add_stack.push('@se f=' + voiceFileName);
+										add_stack.push('@voice f=' + voiceFileName);
 								}
 								add_text = this.nameVoiceCut(add_text);
 								add_text = this.adjustTextLayout(add_text);
@@ -277,23 +383,19 @@
 		ADV_System.prototype.stackRun = function() {
 				if(!this.mRun) return;
 				var stack = this.mStack[0];
-				// skip label
 				while( stack && stack.charAt(0) == '*' ){
 						this.mStack.shift();
 						stack = this.mStack[0];
 				}
 				if(!stack){
-						this.resetMesOption();
 						this.mRun = false;
 						$gameMap._interpreter.setAdvRun(false);
 						return;
 				}
 				if(stack.charAt(0) == '@'){
-					 	//macro
 						var macroCommand = this.mStack.shift();
 						this.macroRun(macroCommand)
 				}else{
-						//text
 						this.showMessage();
 				}
 		}
@@ -301,31 +403,28 @@
 		// show message
 		ADV_System.prototype.showMessage = function() {
 				var text = this.mStack.shift();
-				$gameMessage.setBackground(this.mWindowBack);
-				$gameMessage.setPositionType(this.mWindowPos);
+				$gameMessage.setBackground(paramWindowType);
+				$gameMessage.setPositionType(paramWindowPosition);
 				$gameMessage.add(text);
-				// 次のスタックが「選択肢」「数値入力」「アイテム選択」
-				// の場合は一緒に表示する
 				var stack = this.mStack[0];
-				if( stack && ( stack.indexOf('@select') != -1 ) ){
+				// hold the text if the next stack is choice
+				if(stack && (stack.indexOf('@choice') != -1)){
 						this.stackRun();
 				}
 				this.mWaitMode = 'message';
 		}
 
-		// run macro that is denoted by @
+		// run lines that start with @
 		ADV_System.prototype.macroRun = function(macro) {
 				var argument = {};
 
 				if(macro.indexOf('@bgm ') != -1){
 						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90, t:1000});
-						argument['name'] = argument['f'];
-						argument['pitch'] = Number(argument['pitch']);
-						argument['volume'] = Number(argument['vol']);
+						argument['name'] 		= argument['f'];
 						if(argument['name']){
 								AudioManager.playBgm(argument);
 						}else{
-								var sec_fadeOut = Math.floor(Number(argument['t']) / 1000);
+								var sec_fadeOut = Math.floor(argument['t'] / 1000);
 								AudioManager.fadeOutBgm(sec_fadeOut);
 						}
 				}else if(macro == '@bgm'){
@@ -337,8 +436,6 @@
 				if(macro.indexOf('@se ')  != -1){
 						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
 						argument['name'] = argument['f'];
-						argument['pitch'] = Number(argument['pitch']);
-						argument['volume'] = Number(argument['vol']);
 						if(argument['name']){
 								AudioManager.playSe(argument);
 						}else{
@@ -348,11 +445,18 @@
 						AudioManager.stopSe();
 				}
 
+				if(macro.indexOf('@voice ') != -1){
+						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
+						argument['name'] = argument['f'];
+						if(argument['name']){
+									AudioManager.stopVoice();
+									AudioManager.playVoice(argument);
+						}
+				}
+
 				if(macro.indexOf('@me ') != -1){
 						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
 						argument['name'] = argument['f'];
-						argument['pitch'] = Number(argument['pitch']);
-						argument['volume'] = Number(argument['vol']);
 						if( argument['name'] ){
 								AudioManager.playMe(argument);
 						}else{
@@ -365,12 +469,10 @@
 				if(macro.indexOf('@bgs ') != -1){
 						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90, t:1000});
 						argument['name'] = argument['f'];
-						argument['pitch'] = Number(argument['pitch']);
-						argument['volume'] = Number(argument['vol']);
 						if( argument['name'] ){
 								AudioManager.playBgs(argument);
 						}else{
-								var sec_fadeOut = Math.floor(Number(argument['t']) / 1000);
+								var sec_fadeOut = Math.floor(argument['t'] / 1000);
 								AudioManager.fadeOutBgs(sec_fadeOut);
 						}
 				}else if( macro == '@bgs' ){
@@ -380,19 +482,8 @@
 				}
 
 				if(macro.indexOf('@chara ') != -1){
-						argument = this.makeArg(macro,{opacity:255, face:1, t:paramCharaFadeFrame});
+						argument = this.makeArg(macro,{opacity:255, t:paramCharaFadeFrame});
 						if(argument['f'] == null) return;
-						if(argument['pos']){
-								var presetName = argument['pos'];
-								var presetId = ADV_System.POS_PRESET_NAME.indexOf(presetName);
-								argument['x'] = ADV_System.POS_PRESET_VALUE[presetId][0];
-								argument['y'] = ADV_System.POS_PRESET_VALUE[presetId][1];
-						}
-						if(argument['x'] != null) argument['x'] = Number(argument['x']);
-						if(argument['y'] != null) argument['y'] = Number(argument['y']);
-						argument['opacity'] = Number(argument['opacity']);
-						argument['t'] 			= Number(argument['t']);
-						// if f=Peter@  then delete character Peter
 						if(argument['f'].lastIndexOf('@') == argument['f'].length-1){
 								this.deleteActor(argument);
 						}else{
@@ -407,15 +498,62 @@
 				}
 
 				if(macro.indexOf('@bg ') != -1){
-						argument = this.makeArg(macro,{opacity:255, face:1, t:paramCharaFadeFrame});
+						argument = this.makeArg(macro,{x:Graphics.boxWidth/2, y:Graphics.boxHeight/2, opacity:255, t:paramBgFadeFrame});
 						if(argument['f'] == null) return;
-						argument['x'] 			= Graphics.boxWidth/2;
-						argument['y'] 			= Graphics.boxHeight/2;
-						argument['opacity'] = Number(argument['opacity']);
-						argument['t'] 			= Number(argument['t']);
 						this.loadBg(argument);
 				}else if(macro == '@bg'){
 						this.deleteAllBg();
+				}
+
+				if(macro.indexOf('@msgbox') != -1){
+						if(paramWindowType != 2) return;
+						argument = this.makeArg(macro,{x:paramWindowDefPosX, y:paramWindowDefPosY, opacity:255, f:paramWindowPicName, t:paramMsgboxFadeFrame});
+						if(!this.mWindowPicEnabled){
+								this.loadMsgbox(argument);
+						}else{
+								this.deleteMsgbox(argument);
+						}
+				}
+
+				if(macro.indexOf('@choice ') != -1){
+					//default : 0->None, 1-6>Choice ID 1-6
+					//cancel  :-2->branch,-1->disallow, 0-5->Choice ID 1-6
+						argument = this.makeArg(macro,{back:0, position:2, default:0, cancel:-1});
+						var selectArgs = ['s1','s2','s3','s4','s5','s6'];
+						var choiceText = [];
+						var targetLabels = [];
+						for(var i=0, length=selectArgs.length; i<length; i++){
+								var arg = selectArgs[i];
+								if(argument[arg]){
+										var sel_data = argument[arg].split('/');
+										choiceText.push(sel_data[0]);
+										targetLabels.push(sel_data[1]);
+								}
+						}
+						if(choiceText.length == 0) return;
+						$gameMessage.setChoices(choiceText, Number(argument['default']), Number(argument['cancel']) );
+						$gameMessage.setChoiceBackground(Number(argument['back']));
+						$gameMessage.setChoicePositionType(Number(argument['position']));
+						$gameMessage.setChoiceCallback(function(n) {
+								this.jumpLabel(targetLabels[n]);
+						}.bind(this));
+						this.mWaitMode = 'message';
+				}
+
+				if(macro.indexOf('@jump ') != -1){
+						argument = this.makeArg(macro,{});
+						if(argument['f'] == null) return;
+						if( argument['f'] ){
+								this.jumpLabel(argument['f']);
+						}
+				}
+
+				if(macro.indexOf('@insert ') != -1){
+						argument = this.makeArg(macro,{});
+						if(argument['f'] == null) return;
+						if(argument['f']){
+								this.loadScript(argument['f'], false);
+						}
 				}
 
 				if(macro == '@clearPicCache'){
@@ -424,70 +562,49 @@
 
 				if(macro.indexOf('@wait ') != -1){
 						argument = this.makeArg(macro,{});
-						var waitFrame = Number(argument['t']);
+						if(argument['t'] == null) return;
+						var waitFrame = argument['t'];
 						this.wait(waitFrame);
 				}
 
 				if(macro.indexOf('@fadein') != -1){
 						argument = this.makeArg(macro,{t:paramSceneFadeFrame});
-						var waitFrame = Number(argument['t']);
+						var waitFrame = argument['t'];
 						$gameScreen.startFadeIn(waitFrame);
 						this.wait(waitFrame);
 				}
 
 				if(macro.indexOf('@fadeout') != -1){
 						argument = this.makeArg(macro,{t:paramSceneFadeFrame});
-						var waitFrame = Number(argument['t']);
+						var waitFrame = argument['t'];
 						$gameScreen.startFadeOut(waitFrame);
 						this.wait(waitFrame);
 				}
 
+				if( macro.indexOf('@clearStack') != -1 ){
+						this.resetStack();
+				}
 		}
 
 		// set a MACRO that consists of many "macros"
 		ADV_System.prototype.macroChange = function(macro){
 				var c_macro = [];
-				if( macro.indexOf('@fin') != -1 ){
-					// 変換
-					argument = this.makeArg(macro,{});
-					c_macro.push( '@se' );
-					c_macro.push( '@bgs' );
-					c_macro.push( '@bgv' );
-					c_macro.push( '@flash t=300 wt=1' );
-					c_macro.push( '@flash t=300 wt=1' );
-					c_macro.push( '@flash t=1000' );
-					if( argument['bg'] ) c_macro.push( '@ev f='+argument['bg'] );
-					if( argument['se'] ) c_macro.push( '@se f='+argument['se'] );
-				}else if( macro.indexOf('@bgf') != -1 ){
-					// 変換
-					argument = this.makeArg(macro,{t:1000});
-					c_macro.push( '@flash t='+argument['t'] );
-					if( argument['bg'] ) c_macro.push( '@ev f='+argument['bg'] );
-				}else if( macro.indexOf('@rps_ex') != -1 ){
-					// 変換
-					c_macro.push( '@fadeout' );
-					c_macro.push( '@se' );
-					c_macro.push( '@bgs' );
-					c_macro.push( '@bgv' );
-					c_macro.push( '@bgm' );
-					c_macro.push( '@bs' );
-					c_macro.push( '@ev' );
-					c_macro.push( '@wait t=1000' );
-					c_macro.push( '@fadein' );
-				}else if( macro.indexOf('@rps') != -1 ){
-					// 変換
-					c_macro.push( '@se' );
-					c_macro.push( '@bgs' );
-					c_macro.push( '@bgv' );
-					c_macro.push( '@bgm' );
-					c_macro.push( '@bs' );
-					c_macro.push( '@ev' );
-					c_macro.push( '@wait t=1000' );
-				}else if( macro.indexOf('@qk') != -1 ){
-					// 変換
-					c_macro.push( '@map_scroll dir=l dis=1 spd=6 wt=1' );
-					c_macro.push( '@map_scroll dir=r dis=2 spd=6 wt=1' );
-					c_macro.push( '@map_scroll dir=l dis=1 spd=6 wt=1' );
+				if(macro == '@endg'){
+						argument = this.makeArg(macro,{});
+						c_macro.push('@msgbox');
+						c_macro.push('@chara');
+						c_macro.push('@bg');
+						c_macro.push('@clearPicCache');
+						c_macro.push('@clearStack');
+				}else if(macro == '@end'){
+						c_macro.push('@bgm');
+						c_macro.push('@bgs');
+						c_macro.push('@me');
+						c_macro.push('@msgbox');
+						c_macro.push('@chara');
+						c_macro.push('@bg');
+						c_macro.push('@clearPicCache');
+						c_macro.push('@clearStack');
 				}else{
 						c_macro.push(macro);
 				}
@@ -500,16 +617,30 @@
 				var list = macro.split(' ');
 				list.shift();
 				for(var i=0, len=list.length; i<len; i++){
-						// 「=」で分割
 						var arg = list[i].split('=');
 						var key = arg.shift();
 						arg = arg.join('=');
 						output[key] = arg;
 				}
-				// 初期値入力
+				// if not defined in macro, use values in init
 				for(key in init){
-						if( output[key] == null )	output[key] = init[key];
+						if(output[key] == null)	output[key] = init[key];
 				}
+				if(output['pos'] != null){
+						var presetName 	= output['pos'];
+						var presetId 	 	= ADV_System.POS_PRESET_NAME.indexOf(presetName);
+						output['x'] 		= ADV_System.POS_PRESET_VALUE[presetId][0];
+						output['y'] 		= ADV_System.POS_PRESET_VALUE[presetId][1];
+				}
+				if(output['f'] != null) 			output['f'] 			= String(output['f']);
+				if(output['x'] != null) 			output['x'] 			= Number(output['x']);
+				if(output['y'] != null) 			output['y'] 			= Number(output['y']);
+				if(output['dx'] != null)		 	output['dx'] 			= Number(output['dx']);
+				if(output['dy'] != null) 			output['dy'] 			= Number(output['dy']);
+				if(output['opacity'] != null) output['opacity'] = Number(output['opacity']);
+				if(output['t'] != null) 			output['t'] 			= Number(output['t']);
+				if(output['pitch'] != null) 	output['pitch'] 	= Number(output['pitch']);
+				if(output['vol'] != null) 		output['volume']	= Number(output['vol']);
 				return output;
 		}
 
@@ -517,22 +648,20 @@
 		ADV_System.prototype.adjustTextLayout = function(text){
 				var output = "";
 				var cnt = 0; //# of characters in the current line
-				var includeName = true;
-				// pre-process [name]
-				text = text.replace(/\]/,']\n' + ADV_System.TEXT_INDENT);
-				if(text.indexOf(']\n') != -1 ){
+				var includeName = (text[0] == "[") ? true : false;
+				if(includeName){
+						text = text.replace(/\]/,']\n' + ADV_System.TEXT_INDENT);
 						var name = text.split(']\n')[0].slice(1);
 						var nameLength = name.length;
-						var index = ADV_System.TEXT_COLOR_PRESET_NAME.indexOf(name);
-						if(index != -1){
-								output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[index][0] + "]";
+						var colorIndex = ADV_System.TEXT_COLOR_PRESET_NAME.indexOf(name);
+						if(colorIndex != -1){
+								output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][0] + "]";
 						}
 						text = text.replace(']','');
 						text = text.replace('[','');
 				}else{
-						includeName = false;
-						output += "\n" + ADV_System.TEXT_INDENT + "  ";	// add a space to compensate for the Japanese [ symbol
-						cnt = ADV_System.TEXT_INDENT.length + 2;
+						text = "\n" + ADV_System.TEXT_INDENT + "  " + text;
+						cnt = -2;
 				}
 				// process line break
 				for(var t_cnt=0, length=text.length; t_cnt<length; t_cnt++){
@@ -541,14 +670,14 @@
 								if(cnt > nameLength){
 										includeName = false;
 										cnt = 0;
-										if(index != -1){
-												output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[index][1] + "]";
+										if(colorIndex != -1){
+												output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][1] + "]";
 										}
 								}
 						}
 						if(c == "\\"){
 								var rest = text.substring(t_cnt);
-								var regexp1 = /^\\[a-zA-Z]\[\d+\]/;
+								var regexp1 = /^\\[a-zA-Z]+\[\d+\]/;
 								var regexp2 = /^\\[|\\\}\{\>\<\^\!\.${]/;
 								var match = rest.match(regexp1) || rest.match(regexp2);
 								var escape = match[0];
@@ -580,11 +709,11 @@
 		// strip "/voice" from [name/voice]
 		ADV_System.prototype.nameVoiceCut = function(text) {
 				var output = text;
-				if( text.indexOf('/') != -1 && text.indexOf('[') != -1 && text.indexOf(']') != -1 ){
+				if(text.indexOf('/') != -1 && text.indexOf('[') != -1 && text.indexOf(']') != -1){
 						var name = text.split(']');
 						var new_name = name[0];
 						new_name = new_name.split('/');
-						output = text.replace( name[0], new_name[0] );
+						output = text.replace(name[0], new_name[0]);
 				}
 				return output;
 		}
@@ -603,6 +732,8 @@
 						var oldY = this.mActiveActorsInfo[index].y;
 						var newX = (data.x == null) ? oldX : data.x;
 						var newY = (data.y == null) ? oldY : data.y;
+						if(data.dx != null) newX += data.dx;
+						if(data.dy != null) newY += data.dy;
 						var oldOpacity = this.mActiveActorsInfo[index].opacity;
 						var newOpacity = (data.opacity == null) ? oldOpacity : data.opacity;
 						var waitFrame = data['t'];
@@ -654,37 +785,6 @@
 					this.mActiveBgIndex = -1;
 		}
 
-		ADV_System.prototype.moveFadePicture = function(data){
-				if(data.new){
-					var afterOpacity = data['opacity'];
-					data['x'] = data['ox'];
-					data['y'] = data['oy'];
-					data['opacity'] = data.type == 'in' ? 0 : 255;
-					this.loadPicture(data);
-					data['opacity'] = afterOpacity;
-				}
-				// 検索用の名前
-				var check_name = data.f.split('@');
-				check_name = check_name[0] + '@';
-				// 画像を取得
-				var pict_data = this.findPicture(check_name);
-				// 画像が読み込め無かった
-				if( pict_data == null ) return;
-				// 画像ID
-				var pict_id_base = pict_data.base_id;
-				// セットする値
-				var set_op = data.type == 'in' ? data.opacity : 0;
-				var set_time = data.t;
-				for(var key in pict_data.list){
-						var val = pict_data.list[key];
-						// セットする値
-						var set_x = val._x + data['mx'];
-						var set_y = val._y + data['my'];
-						var pict_id = pict_id_base*this.ADD_LAYER_NUM.BASE+this.ADD_LAYER_NUM[key];
-						$gameScreen.movePicture(pict_id, 1, set_x, set_y, 100, 100, set_op, 0, set_time);
-				}
-		}
-
 		ADV_System.prototype.loadBg = function(data){
 				var filename = data.f;
 				var newX = data.x;
@@ -695,16 +795,15 @@
 				if(index == 0){
 						var imgId = paramBgPicIdBase + 1;
 						this.mPicIdInUse.push(imgId);
-						$gameScreen.movePicture(imgId-1, 1, newX, newY, 100, 100, 0, 0, waitFrame);
 						$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
 						$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
 						this.wait(waitFrame);
+						$gameScreen.movePicture(imgId-1, 1, newX, newY, 100, 100, 0, 0, 0);
 						this.mActiveBgIndex = 1;
 				}else if(index == 1){
 						var imgId = paramBgPicIdBase;
+						$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 255, 0);
 						$gameScreen.movePicture(imgId+1, 1, newX, newY, 100, 100, 0, 0, waitFrame);
-						$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
-						$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
 						this.wait(waitFrame);
 						this.mActiveBgIndex = 0;
 				}else if(index == -1){
@@ -715,19 +814,43 @@
 						this.wait(waitFrame);
 						this.mActiveBgIndex = 0;
 				}
-
-				ADV_System.prototype.deleteAllBg = function(){
-					var imgId = paramBgPicIdBase;
-					var waitFrame = 60;
-					var oldX = Graphics.boxWidth/2;
-					var oldY = Graphics.boxHeight/2;
-					$gameScreen.movePicture(imgId, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
-					$gameScreen.movePicture(imgId+1, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
-					this.wait(waitFrame);
-					this.mActiveBgIndex = -1;
-
-				}
 		}
+
+		ADV_System.prototype.deleteAllBg = function(){
+				var imgId = paramBgPicIdBase;
+				var waitFrame = 60;
+				var oldX = Graphics.boxWidth/2;
+				var oldY = Graphics.boxHeight/2;
+				$gameScreen.movePicture(imgId, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
+				$gameScreen.movePicture(imgId+1, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
+				this.wait(waitFrame);
+				this.mActiveBgIndex = -1;
+		}
+
+		ADV_System.prototype.loadMsgbox = function(data){
+				var filename = data.f;
+				var imgId = parammsgboxPicIdBase;
+				var newX = data.x;
+				var newY = data.y;
+				var newOpacity = data.opacity;
+				var waitFrame = data.t;
+				this.mPicIdInUse.push(imgId);
+				this.mWindowPicEnabled = true;
+				$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
+				$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
+				this.wait(waitFrame);
+		}
+
+		ADV_System.prototype.deleteMsgbox = function(data){
+				var imgId = parammsgboxPicIdBase;
+				var newX = data.x;
+				var newY = data.y;
+				var waitFrame = data.t;
+				this.mWindowPicEnabled = false;
+				$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, 0, 0, waitFrame);
+				this.wait(waitFrame);
+		}
+
 		//***************************************************************
 		// Internal Process
 		//***************************************************************
@@ -747,14 +870,17 @@
 				this.mStack = [];
 		}
 
-		ADV_System.prototype.resetMesOption = function(){
-				this.mWindowBack = paramWindowType;
-				this.mWindowPos  = paramWindowPosition;
+		ADV_System.prototype.jumpLabel = function(label) {
+				var stack = this.mStack[0];
+				while(stack && stack != label){
+						this.mStack.shift();
+						stack = this.mStack[0];
+				}
 		}
 
     ADV_System.prototype.update = function(){
-        if(!this.mRun) return;// システム実行中じゃない
-        if(this.updateWaitCount() || this.updateWait()) return;// 何かの処理待ち中
+        if(!this.mRun) return;// adv system is not running
+        if(this.updateWaitCount() || this.updateWait()) return;// return while processing
         this.stackRun();
     }
 
@@ -808,7 +934,7 @@
 		}
 
 		ADV_System.prototype.wait = function(duration) {
-			this.mWaitCount = duration;
+				this.mWaitCount = duration;
 		}
 
 		//***************************************************************
@@ -851,6 +977,33 @@
 	    		this._mAdvRun = flag;
 	    		if (this._childInterpreter) this._childInterpreter.setAdvRun(flag);
     	};
+
+			AudioManager.playVoice = function(voice) {
+					if (voice.name) {
+							this._seBuffers = this._seBuffers.filter(function(audio) {
+								if(audio._url.indexOf('/voice/') != -1){
+										return audio.isPlaying();
+								}
+								return true;
+							});
+							var buffer = this.createBuffer('voice', voice.name);
+							this.updateVoiceParameters(buffer, voice);
+							buffer.play(false);
+							this._seBuffers.push(buffer);
+					}
+			};
+
+			AudioManager.stopVoice = function() {
+					this._seBuffers.forEach(function(buffer) {
+							if( buffer._url.indexOf('/voice/') != -1 ){
+									buffer.stop();
+							}
+					});
+			};
+
+			AudioManager.updateVoiceParameters = function(buffer, voice) {
+					this.updateBufferParameters(buffer, paramVoiceVolume, voice);
+			};
 
 
 })();
