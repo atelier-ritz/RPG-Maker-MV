@@ -6,6 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.0.1 2017/12/28 Fixed inconsistence use of spaces and tabs.
 // 1.0.0 2017/12/24 First Version.
 // 0.0.1 2017/12/12 Start development.
 // ----------------------------------------------------------------------------
