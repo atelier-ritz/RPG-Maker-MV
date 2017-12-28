@@ -253,630 +253,628 @@
 		const pluginName = 'RitzAdv';
 
     //=============================================================================
-		// print
-		//=============================================================================
+	// print
+	//=============================================================================
     p = function(value) {
         console.log.apply(console, arguments);
         SceneManager.getNwJs().showDevTools();
     };
 
-		//=============================================================================
+	//=============================================================================
     // PluginManager Variables
     // Parameters obtained from the plugin manager
     //=============================================================================
-		const myParameters 						= PluginManager.parameters(pluginName);
+	const myParameters             = PluginManager.parameters(pluginName);
 
-		const paramNumCharPerLine 		= Number(myParameters['characterPerLine']);
-		const paramNameIndent 				= Number(myParameters['nameIndent']);
-		const paramTextIndent 				= Number(myParameters['textIndent']);
-		const paramSpecialCharacters 	= String(myParameters['specialCharacters']);
-		const paramCharaTextColor			= JSON.parse(myParameters['characterTextColor']);
-		const paramWindowType 				= Number(myParameters['windowType']);
-		const paramWindowPosition   	= Number(myParameters['windowPosition']);
-		const paramWindowPicName		 	= String(myParameters['windowPicName']);
-		const paramWindowDefPosX	   	= Number(myParameters['windowPicPositionX']);
-		const paramWindowDefPosY	   	= Number(myParameters['windowPicPositionY']);
-		const paramPosPreset					= JSON.parse(myParameters['positionPresets']);
-		const paramCharaPicIdBase			= Number(myParameters['charaPicIdStartFrom']);
-		const paramBgPicIdBase				= Number(myParameters['bgPicIdStartFrom']);
-		const parammsgboxPicIdBase		= Number(myParameters['msgboxPicIdStartFrom']);
-		const paramCharaFadeFrame 		= Number(myParameters['defaultCharaFadeFrame']);
-		const paramBgFadeFrame 				= Number(myParameters['defaultBgFadeFrame']);
-		const paramMsgboxFadeFrame  	= Number(myParameters['defaultMsgboxFadeFrame']);
-		const paramSceneFadeFrame 		= Number(myParameters['defaultSceneFadeFrame']);
-		const paramVoiceVolume		 		= Number(myParameters['voiceVolume']);
+	const paramNumCharPerLine      = Number(myParameters['characterPerLine']);
+	const paramNameIndent          = Number(myParameters['nameIndent']);
+	const paramTextIndent          = Number(myParameters['textIndent']);
+	const paramSpecialCharacters   = String(myParameters['specialCharacters']);
+	const paramCharaTextColor      = JSON.parse(myParameters['characterTextColor']);
+	const paramWindowType          = Number(myParameters['windowType']);
+	const paramWindowPosition      = Number(myParameters['windowPosition']);
+	const paramWindowPicName       = String(myParameters['windowPicName']);
+	const paramWindowDefPosX       = Number(myParameters['windowPicPositionX']);
+	const paramWindowDefPosY       = Number(myParameters['windowPicPositionY']);
+	const paramPosPreset           = JSON.parse(myParameters['positionPresets']);
+	const paramCharaPicIdBase      = Number(myParameters['charaPicIdStartFrom']);
+	const paramBgPicIdBase         = Number(myParameters['bgPicIdStartFrom']);
+	const parammsgboxPicIdBase     = Number(myParameters['msgboxPicIdStartFrom']);
+	const paramCharaFadeFrame      = Number(myParameters['defaultCharaFadeFrame']);
+	const paramBgFadeFrame         = Number(myParameters['defaultBgFadeFrame']);
+	const paramMsgboxFadeFrame     = Number(myParameters['defaultMsgboxFadeFrame']);
+	const paramSceneFadeFrame      = Number(myParameters['defaultSceneFadeFrame']);
+	const paramVoiceVolume         = Number(myParameters['voiceVolume']);
+
+	//***************************************************************
+	// ADV_System
+	//***************************************************************
+	function ADV_System() {
+			this.initialize.apply(this, arguments);
+	}
+
+	ADV_System.NAME_INDENT 								= new Array(paramNameIndent + 1).join(' ');
+	ADV_System.TEXT_INDENT 								= new Array(paramTextIndent + 1).join(' ');
+	ADV_System.TEXT_COLOR_PRESET_NAME 		= [];
+	ADV_System.TEXT_COLOR_PRESET_VALUE 		= [];
+	ADV_System.POS_PRESET_NAME 						= [];
+	ADV_System.POS_PRESET_VALUE 					= [];
 
 
-		//***************************************************************
-		// ADV_System
-		//***************************************************************
-		function ADV_System() {
-				this.initialize.apply(this, arguments);
+	ADV_System.prototype.initialize = function(){
+		this.mStack = [];
+		this.mRun = false;
+		this.mWaitMode = '';
+		this.mWaitData = null;
+		this.mWaitCount = 0;
+		this.mWindowPicEnabled 	= false;
+		this.mViewPictId = -1;
+		//graphics
+		this.mPicIdInUse = [];
+		//characterGraphic
+		this.mActiveActors = [];   // names of active actors on the screen
+		this.mActiveActorsInfo = []; 	// imageId, name, xPos, yPos
+		this.mActiveBgIndex = -1;		// active bg pic id offset. DO NOT change.
+
+		for(var key in paramCharaTextColor){
+			var temp = paramCharaTextColor[key].split(',');
+			ADV_System.TEXT_COLOR_PRESET_NAME.push(temp[2]);
+			ADV_System.TEXT_COLOR_PRESET_VALUE.push([Number(temp[0]),Number(temp[1])]);
 		}
 
-		ADV_System.NAME_INDENT 								= new Array(paramNameIndent + 1).join(' ');
-		ADV_System.TEXT_INDENT 								= new Array(paramTextIndent + 1).join(' ');
-		ADV_System.TEXT_COLOR_PRESET_NAME 		= [];
-		ADV_System.TEXT_COLOR_PRESET_VALUE 		= [];
-		ADV_System.POS_PRESET_NAME 						= [];
-		ADV_System.POS_PRESET_VALUE 					= [];
+		for(var key in paramPosPreset){
+			var temp = paramPosPreset[key].split(',');
+			ADV_System.POS_PRESET_NAME.push(temp[2]);
+			ADV_System.POS_PRESET_VALUE.push([Number(temp[0]),Number(temp[1])]);
+		}
+	};
 
-
-		ADV_System.prototype.initialize = function(){
-				this.mStack 						= [];
-				this.mRun 							= false;
-				this.mWaitMode 					= '';
-				this.mWaitData 					= null;		// 判定時に使うデータ
-				this.mWaitCount 				= 0;			// 終了待ちが時間指定の場合
-				this.mWindowPicEnabled 	= false;
-				this.mViewPictId 				= -1;
-				//graphics
-				this.mPicIdInUse 				= [];
-				//characterGraphic
-				this.mActiveActors 		 	= [];   // names of active actors on the screen
-				this.mActiveActorsInfo 	= []; 	// imageId, name, xPos, yPos
-				this.mActiveBgIndex			= -1;		// active bg pic id offset. DO NOT change.
-
-				for(var key in paramCharaTextColor){
-						var temp = paramCharaTextColor[key].split(',');
-						ADV_System.TEXT_COLOR_PRESET_NAME.push(temp[2]);
-						ADV_System.TEXT_COLOR_PRESET_VALUE.push([Number(temp[0]),Number(temp[1])]);
+	//***************************************************************
+	// General
+	//***************************************************************
+	// load .txt file and store the converted commands at this.mStack
+	ADV_System.prototype.loadScript = function(filename,reset) {
+		if(reset === undefined) reset = true;
+		if(reset) this.resetStack();
+		var fs = require('fs');
+		var filepath = this.localFileDirectoryPath() + filename + '.txt';
+		var file_data = fs.readFileSync(filepath, 'utf-8');
+		var commandList = file_data.split('\n');
+		var new_stack = [];
+		for(var i=0, len=commandList.length; i<len; i++){
+			var text = commandList[i];
+			var add_stack = [];
+			text = this.chomp(text);
+			text = text.trim();
+			// empty
+			if(text.trim() == "" || text.trim() == '\r') continue;
+			// comments
+			if(text.charAt(0) == ';') continue;
+			//macro
+			if(text.charAt(0) == '@'){
+					add_stack = this.macroChange(this.chomp(text));
+			//label
+			}else if(text.charAt(0) == '*'){
+					add_stack = this.macroChange(this.chomp(text));
+			// text
+			}else{
+				var add_text = text;
+				if(add_text.indexOf('/') != -1){
+					var voiceFileName = add_text.slice(add_text.indexOf('/')+1,add_text.indexOf(']'));
+					add_stack.push('@voice f=' + voiceFileName);
 				}
+				add_text = this.nameVoiceCut(add_text);
+				add_text = this.adjustTextLayout(add_text);
+				add_stack.push(add_text);
+			}
+			new_stack = new_stack.concat(add_stack);
+		}
+		this.mStack = new_stack.concat(this.mStack);
+		if(reset){
+				this.mRun = true;
+				$gameMap._interpreter.setAdvRun(true);
+				this.stackRun();
+		}
+	}
 
-				for(var key in paramPosPreset){
-						var temp = paramPosPreset[key].split(',');
-						ADV_System.POS_PRESET_NAME.push(temp[2]);
-						ADV_System.POS_PRESET_VALUE.push([Number(temp[0]),Number(temp[1])]);
-				}
+	// run the lines in this.mStack -> showMessage()/macroRun()
+	ADV_System.prototype.stackRun = function() {
+		if(!this.mRun) return;
+		var stack = this.mStack[0];
+		while( stack && stack.charAt(0) == '*' ){
+			this.mStack.shift();
+			stack = this.mStack[0];
+		}
+		if(!stack){
+			this.mRun = false;
+			$gameMap._interpreter.setAdvRun(false);
+			return;
+		}
+		if(stack.charAt(0) == '@'){
+			var macroCommand = this.mStack.shift();
+			this.macroRun(macroCommand)
+		}else{
+			this.showMessage();
+		}
+	}
 
-		};
+	// show message
+	ADV_System.prototype.showMessage = function() {
+		var text = this.mStack.shift();
+		$gameMessage.setBackground(paramWindowType);
+		$gameMessage.setPositionType(paramWindowPosition);
+		$gameMessage.add(text);
+		var stack = this.mStack[0];
+		// hold the text if the next stack is choice
+		if(stack && (stack.indexOf('@choice') != -1)){
+			this.stackRun();
+		}
+		this.mWaitMode = 'message';
+	}
 
-		//***************************************************************
-		// General
-		//***************************************************************
-		// load .txt file and store the converted commands at this.mStack
-		ADV_System.prototype.loadScript = function(filename,reset) {
-				if(reset === undefined) reset = true;
-				if(reset) this.resetStack();
-				var fs = require('fs');
-				var filepath = this.localFileDirectoryPath() + filename + '.txt';
-				var file_data = fs.readFileSync(filepath, 'utf-8');
-				var commandList = file_data.split('\n');
-				var new_stack = [];
-				for(var i=0, len=commandList.length; i<len; i++){
-						var text = commandList[i];
-						var add_stack = [];
-						text = this.chomp(text);
-						text = text.trim();
-						// empty
-						if(text.trim() == "" || text.trim() == '\r') continue;
-						// comments
-						if(text.charAt(0) == ';') continue;
-						//macro
-						if(text.charAt(0) == '@'){
-								add_stack = this.macroChange(this.chomp(text));
-						//label
-						}else if(text.charAt(0) == '*'){
-								add_stack = this.macroChange(this.chomp(text));
-						// text
-						}else{
-								var add_text = text;
-								if(add_text.indexOf('/') != -1){
-										var voiceFileName = add_text.slice(add_text.indexOf('/')+1,add_text.indexOf(']'));
-										add_stack.push('@voice f=' + voiceFileName);
-								}
-								add_text = this.nameVoiceCut(add_text);
-								add_text = this.adjustTextLayout(add_text);
-								add_stack.push(add_text);
-						}
-						new_stack = new_stack.concat(add_stack);
-				}
-				this.mStack = new_stack.concat(this.mStack);
-				if(reset){
-						this.mRun = true;
-						$gameMap._interpreter.setAdvRun(true);
-						this.stackRun();
-				}
+	// run lines that start with @
+	ADV_System.prototype.macroRun = function(macro) {
+		var argument = {};
+
+		if(macro.indexOf('@bgm ') != -1){
+			argument = this.makeArg(macro,{pan:0, pitch:100, vol:90, t:1000});
+			argument['name'] 		= argument['f'];
+			if(argument['name']){
+				AudioManager.playBgm(argument);
+			}else{
+				var sec_fadeOut = Math.floor(argument['t'] / 1000);
+				AudioManager.fadeOutBgm(sec_fadeOut);
+			}
+		}else if(macro == '@bgm'){
+			var sec_fadeOut = 1;
+			argument['t'] = sec_fadeOut;
+			AudioManager.fadeOutBgm(argument['t']);
 		}
 
-		// run the lines in this.mStack -> showMessage()/macroRun()
-		ADV_System.prototype.stackRun = function() {
-				if(!this.mRun) return;
-				var stack = this.mStack[0];
-				while( stack && stack.charAt(0) == '*' ){
-						this.mStack.shift();
-						stack = this.mStack[0];
-				}
-				if(!stack){
-						this.mRun = false;
-						$gameMap._interpreter.setAdvRun(false);
-						return;
-				}
-				if(stack.charAt(0) == '@'){
-						var macroCommand = this.mStack.shift();
-						this.macroRun(macroCommand)
-				}else{
-						this.showMessage();
-				}
+		if(macro.indexOf('@se ')  != -1){
+			argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
+			argument['name'] = argument['f'];
+			if(argument['name']){
+				AudioManager.playSe(argument);
+			}else{
+				AudioManager.stopSe();
+			}
+		}else if(macro == '@se'){
+			AudioManager.stopSe();
 		}
 
-		// show message
-		ADV_System.prototype.showMessage = function() {
-				var text = this.mStack.shift();
-				$gameMessage.setBackground(paramWindowType);
-				$gameMessage.setPositionType(paramWindowPosition);
-				$gameMessage.add(text);
-				var stack = this.mStack[0];
-				// hold the text if the next stack is choice
-				if(stack && (stack.indexOf('@choice') != -1)){
-						this.stackRun();
-				}
-				this.mWaitMode = 'message';
+		if(macro.indexOf('@voice ') != -1){
+			argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
+			argument['name'] = argument['f'];
+			if(argument['name']){
+				AudioManager.stopVoice();
+				AudioManager.playVoice(argument);
+			}
 		}
 
-		// run lines that start with @
-		ADV_System.prototype.macroRun = function(macro) {
-				var argument = {};
-
-				if(macro.indexOf('@bgm ') != -1){
-						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90, t:1000});
-						argument['name'] 		= argument['f'];
-						if(argument['name']){
-								AudioManager.playBgm(argument);
-						}else{
-								var sec_fadeOut = Math.floor(argument['t'] / 1000);
-								AudioManager.fadeOutBgm(sec_fadeOut);
-						}
-				}else if(macro == '@bgm'){
-						var sec_fadeOut = 1;
-						argument['t'] = sec_fadeOut;
-						AudioManager.fadeOutBgm(argument['t']);
-				}
-
-				if(macro.indexOf('@se ')  != -1){
-						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
-						argument['name'] = argument['f'];
-						if(argument['name']){
-								AudioManager.playSe(argument);
-						}else{
-								AudioManager.stopSe();
-						}
-				}else if(macro == '@se'){
-						AudioManager.stopSe();
-				}
-
-				if(macro.indexOf('@voice ') != -1){
-						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
-						argument['name'] = argument['f'];
-						if(argument['name']){
-									AudioManager.stopVoice();
-									AudioManager.playVoice(argument);
-						}
-				}
-
-				if(macro.indexOf('@me ') != -1){
-						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
-						argument['name'] = argument['f'];
-						if( argument['name'] ){
-								AudioManager.playMe(argument);
-						}else{
-								AudioManager.stopMe();
-						}
-				}else if(macro == '@me'){
-						AudioManager.stopMe();
-				}
-
-				if(macro.indexOf('@bgs ') != -1){
-						argument = this.makeArg(macro,{pan:0, pitch:100, vol:90, t:1000});
-						argument['name'] = argument['f'];
-						if( argument['name'] ){
-								AudioManager.playBgs(argument);
-						}else{
-								var sec_fadeOut = Math.floor(argument['t'] / 1000);
-								AudioManager.fadeOutBgs(sec_fadeOut);
-						}
-				}else if( macro == '@bgs' ){
-						var sec_fadeOut = 1;
-						argument['t'] = sec_fadeOut;
-						AudioManager.fadeOutBgs(argument['t']);
-				}
-
-				if(macro.indexOf('@chara ') != -1){
-						argument = this.makeArg(macro,{opacity:255, t:paramCharaFadeFrame});
-						if(argument['f'] == null) return;
-						if(argument['f'].lastIndexOf('@') == argument['f'].length-1){
-								this.deleteActor(argument);
-						}else{
-								this.loadActor(argument);
-						}
-				}else if(macro == '@chara'){
-						argument = this.makeArg(macro,{t:paramCharaFadeFrame});
-						for(var i in this.mActiveActorsInfo){
-								argument['f'] = this.mActiveActorsInfo[i].name;
-								this.deleteActor(argument);
-						}
-				}
-
-				if(macro.indexOf('@bg ') != -1){
-						argument = this.makeArg(macro,{x:Graphics.boxWidth/2, y:Graphics.boxHeight/2, opacity:255, t:paramBgFadeFrame});
-						if(argument['f'] == null) return;
-						this.loadBg(argument);
-				}else if(macro == '@bg'){
-						this.deleteAllBg();
-				}
-
-				if(macro.indexOf('@msgbox') != -1){
-						if(paramWindowType != 2) return;
-						argument = this.makeArg(macro,{x:paramWindowDefPosX, y:paramWindowDefPosY, opacity:255, f:paramWindowPicName, t:paramMsgboxFadeFrame});
-						if(!this.mWindowPicEnabled){
-								this.loadMsgbox(argument);
-						}else{
-								this.deleteMsgbox(argument);
-						}
-				}
-
-				if(macro.indexOf('@choice ') != -1){
-					//default : 0->None, 1-6>Choice ID 1-6
-					//cancel  :-2->branch,-1->disallow, 0-5->Choice ID 1-6
-						argument = this.makeArg(macro,{back:0, position:2, default:0, cancel:-1});
-						var selectArgs = ['s1','s2','s3','s4','s5','s6'];
-						var choiceText = [];
-						var targetLabels = [];
-						for(var i=0, length=selectArgs.length; i<length; i++){
-								var arg = selectArgs[i];
-								if(argument[arg]){
-										var sel_data = argument[arg].split('/');
-										choiceText.push(sel_data[0]);
-										targetLabels.push(sel_data[1]);
-								}
-						}
-						if(choiceText.length == 0) return;
-						$gameMessage.setChoices(choiceText, Number(argument['default']), Number(argument['cancel']) );
-						$gameMessage.setChoiceBackground(Number(argument['back']));
-						$gameMessage.setChoicePositionType(Number(argument['position']));
-						$gameMessage.setChoiceCallback(function(n) {
-								this.jumpLabel(targetLabels[n]);
-						}.bind(this));
-						this.mWaitMode = 'message';
-				}
-
-				if(macro.indexOf('@jump ') != -1){
-						argument = this.makeArg(macro,{});
-						if(argument['f'] == null) return;
-						if( argument['f'] ){
-								this.jumpLabel(argument['f']);
-						}
-				}
-
-				if(macro.indexOf('@insert ') != -1){
-						argument = this.makeArg(macro,{});
-						if(argument['f'] == null) return;
-						if(argument['f']){
-								this.loadScript(argument['f'], false);
-						}
-				}
-
-				if(macro == '@clearPicCache'){
-						this.clearPicCache()
-				}
-
-				if(macro.indexOf('@wait ') != -1){
-						argument = this.makeArg(macro,{});
-						if(argument['t'] == null) return;
-						var waitFrame = argument['t'];
-						this.wait(waitFrame);
-				}
-
-				if(macro.indexOf('@fadein') != -1){
-						argument = this.makeArg(macro,{t:paramSceneFadeFrame});
-						var waitFrame = argument['t'];
-						$gameScreen.startFadeIn(waitFrame);
-						this.wait(waitFrame);
-				}
-
-				if(macro.indexOf('@fadeout') != -1){
-						argument = this.makeArg(macro,{t:paramSceneFadeFrame});
-						var waitFrame = argument['t'];
-						$gameScreen.startFadeOut(waitFrame);
-						this.wait(waitFrame);
-				}
-
-				if( macro.indexOf('@clearStack') != -1 ){
-						this.resetStack();
-				}
+		if(macro.indexOf('@me ') != -1){
+			argument = this.makeArg(macro,{pan:0, pitch:100, vol:90});
+			argument['name'] = argument['f'];
+			if( argument['name'] ){
+				AudioManager.playMe(argument);
+			}else{
+				AudioManager.stopMe();
+			}
+		}else if(macro == '@me'){
+			AudioManager.stopMe();
 		}
 
-		// set a MACRO that consists of many "macros"
-		ADV_System.prototype.macroChange = function(macro){
-				var c_macro = [];
-				if(macro == '@endg'){
-						argument = this.makeArg(macro,{});
-						c_macro.push('@msgbox');
-						c_macro.push('@chara');
-						c_macro.push('@bg');
-						c_macro.push('@clearPicCache');
-						c_macro.push('@clearStack');
-				}else if(macro == '@end'){
-						c_macro.push('@bgm');
-						c_macro.push('@bgs');
-						c_macro.push('@me');
-						c_macro.push('@msgbox');
-						c_macro.push('@chara');
-						c_macro.push('@bg');
-						c_macro.push('@clearPicCache');
-						c_macro.push('@clearStack');
-				}else{
-						c_macro.push(macro);
-				}
-				return c_macro;
+		if(macro.indexOf('@bgs ') != -1){
+			argument = this.makeArg(macro,{pan:0, pitch:100, vol:90, t:1000});
+			argument['name'] = argument['f'];
+			if( argument['name'] ){
+				AudioManager.playBgs(argument);
+			}else{
+				var sec_fadeOut = Math.floor(argument['t'] / 1000);
+				AudioManager.fadeOutBgs(sec_fadeOut);
+			}
+		}else if( macro == '@bgs' ){
+			var sec_fadeOut = 1;
+			argument['t'] = sec_fadeOut;
+			AudioManager.fadeOutBgs(argument['t']);
 		}
 
-		// combine arguments passed by the .txt file and variable "init"
-		ADV_System.prototype.makeArg = function(macro,init) {
-				var output = {};
-				var list = macro.split(' ');
-				list.shift();
-				for(var i=0, len=list.length; i<len; i++){
-						var arg = list[i].split('=');
-						var key = arg.shift();
-						arg = arg.join('=');
-						output[key] = arg;
-				}
-				// if not defined in macro, use values in init
-				for(key in init){
-						if(output[key] == null)	output[key] = init[key];
-				}
-				if(output['pos'] != null){
-						var presetName 	= output['pos'];
-						var presetId 	 	= ADV_System.POS_PRESET_NAME.indexOf(presetName);
-						output['x'] 		= ADV_System.POS_PRESET_VALUE[presetId][0];
-						output['y'] 		= ADV_System.POS_PRESET_VALUE[presetId][1];
-				}
-				if(output['f'] != null) 			output['f'] 			= String(output['f']);
-				if(output['x'] != null) 			output['x'] 			= Number(output['x']);
-				if(output['y'] != null) 			output['y'] 			= Number(output['y']);
-				if(output['dx'] != null)		 	output['dx'] 			= Number(output['dx']);
-				if(output['dy'] != null) 			output['dy'] 			= Number(output['dy']);
-				if(output['opacity'] != null) output['opacity'] = Number(output['opacity']);
-				if(output['t'] != null) 			output['t'] 			= Number(output['t']);
-				if(output['pitch'] != null) 	output['pitch'] 	= Number(output['pitch']);
-				if(output['vol'] != null) 		output['volume']	= Number(output['vol']);
-				return output;
+		if(macro.indexOf('@chara ') != -1){
+			argument = this.makeArg(macro,{opacity:255, t:paramCharaFadeFrame});
+			if(argument['f'] == null) return;
+			if(argument['f'].lastIndexOf('@') == argument['f'].length-1){
+				this.deleteActor(argument);
+			}else{
+				this.loadActor(argument);
+			}
+		}else if(macro == '@chara'){
+			argument = this.makeArg(macro,{t:paramCharaFadeFrame});
+			for(var i in this.mActiveActorsInfo){
+				argument['f'] = this.mActiveActorsInfo[i].name;
+				this.deleteActor(argument);
+			}
 		}
 
-		// process indent
-		ADV_System.prototype.adjustTextLayout = function(text){
-				var output = "";
-				var cnt = 0; //# of characters in the current line
-				var includeName = (text[0] == "[") ? true : false;
-				if(includeName){
-						text = text.replace(/\]/,']\n' + ADV_System.TEXT_INDENT);
-						var name = text.split(']\n')[0].slice(1);
-						var nameLength = name.length;
-						var colorIndex = ADV_System.TEXT_COLOR_PRESET_NAME.indexOf(name);
-						if(colorIndex != -1){
-								output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][0] + "]";
-						}
-						text = text.replace(']','');
-						text = text.replace('[','');
-				}else{
-						text = "\n" + ADV_System.TEXT_INDENT + "  " + text;
-						cnt = -2;
-				}
-				// process line break
-				for(var t_cnt=0, length=text.length; t_cnt<length; t_cnt++){
-						var c = text[t_cnt];
-						if(includeName){
-								if(cnt > nameLength){
-										includeName = false;
-										cnt = 0;
-										if(colorIndex != -1){
-												output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][1] + "]";
-										}
-								}
-						}
-						if(c == "\\"){
-								var rest = text.substring(t_cnt);
-								var regexp1 = /^\\[a-zA-Z]+\[\d+\]/;
-								var regexp2 = /^\\[|\\\}\{\>\<\^\!\.${]/;
-								var match = rest.match(regexp1) || rest.match(regexp2);
-								var escape = match[0];
-								if(escape){
-										output += escape;
-										t_cnt += escape.length - 1;
-								}
-						}else if(!includeName && cnt >= paramNumCharPerLine){
-								if(paramSpecialCharacters.indexOf(c) != -1){
-										output += c;
-										cnt++;
-								}else{
-										output += "\n" + ADV_System.TEXT_INDENT + "  " + c;
-										cnt = ADV_System.TEXT_INDENT.length + 2;
-								}
-						}else if(c == "\\" && text[t_cnt+1] && text[t_cnt+1] =='n'){	// break line symbol
-								output += "\n" + ADV_System.TEXT_INDENT + "  ";
-								cnt = ADV_System.TEXT_INDENT.length + 2 - 1;
-								t_cnt++;
-						}else{
-								output += c;
-								cnt++;
-						}
-				};
-				output = ADV_System.NAME_INDENT + output;
-				return output;
+		if(macro.indexOf('@bg ') != -1){
+			argument = this.makeArg(macro,{x:Graphics.boxWidth/2, y:Graphics.boxHeight/2, opacity:255, t:paramBgFadeFrame});
+			if(argument['f'] == null) return;
+			this.loadBg(argument);
+		}else if(macro == '@bg'){
+			this.deleteAllBg();
 		}
 
-		// strip "/voice" from [name/voice]
-		ADV_System.prototype.nameVoiceCut = function(text) {
-				var output = text;
-				if(text.indexOf('/') != -1 && text.indexOf('[') != -1 && text.indexOf(']') != -1){
-						var name = text.split(']');
-						var new_name = name[0];
-						new_name = new_name.split('/');
-						output = text.replace(name[0], new_name[0]);
-				}
-				return output;
+		if(macro.indexOf('@msgbox') != -1){
+			if(paramWindowType != 2) return;
+			argument = this.makeArg(macro,{x:paramWindowDefPosX, y:paramWindowDefPosY, opacity:255, f:paramWindowPicName, t:paramMsgboxFadeFrame});
+			if(!this.mWindowPicEnabled){
+				this.loadMsgbox(argument);
+			}else{
+				this.deleteMsgbox(argument);
+			}
 		}
 
-		//***************************************************************
-		// Graphics
-		//***************************************************************
-		ADV_System.prototype.loadActor = function(data){
-				var filename = data.f;
-				var name = filename.split('@')[0];
-				if(this.mActiveActors.indexOf(name) != -1){
-						// this actor is already defined
-						var index = this.mActiveActors.indexOf(name);
-						var imgId = this.mActiveActorsInfo[index].pictureID;
-						var oldX = this.mActiveActorsInfo[index].x;
-						var oldY = this.mActiveActorsInfo[index].y;
-						var newX = (data.x == null) ? oldX : data.x;
-						var newY = (data.y == null) ? oldY : data.y;
-						if(data.dx != null) newX += data.dx;
-						if(data.dy != null) newY += data.dy;
-						var oldOpacity = this.mActiveActorsInfo[index].opacity;
-						var newOpacity = (data.opacity == null) ? oldOpacity : data.opacity;
-						var waitFrame = data['t'];
-						$gameScreen.showPicture(imgId, filename, 1, oldX, oldY, 100, 100, oldOpacity, 0);
-						$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
-						this.wait(waitFrame);
-						this.mActiveActorsInfo[index] = {name:name, pictureID:imgId, x:newX, y:newY, opacity:newOpacity};
-				}else{
-						// this actor is not defined
-						var index = this.mActiveActors.length;
-						var imgId = paramCharaPicIdBase + index;
-						var newX = (data.x == null) ? Graphics.boxWidth/2 : data.x;
-						var newY = (data.y == null) ? Graphics.boxHeight/2: data.y;
-						var newOpacity = data.opacity;
-						var waitFrame = data.t;
-						this.mActiveActors[index] = name;
-						this.mActiveActorsInfo.push({name:name, pictureID:imgId, x:newX, y:newY, opacity:newOpacity});
-						this.mPicIdInUse.push(imgId);
-						$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
-						$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
-						this.wait(waitFrame);
+		if(macro.indexOf('@choice ') != -1){
+			//default : 0->None, 1-6>Choice ID 1-6
+			//cancel  :-2->branch,-1->disallow, 0-5->Choice ID 1-6
+			argument = this.makeArg(macro,{back:0, position:2, default:0, cancel:-1});
+			var selectArgs = ['s1','s2','s3','s4','s5','s6'];
+			var choiceText = [];
+			var targetLabels = [];
+			for(var i=0, length=selectArgs.length; i<length; i++){
+				var arg = selectArgs[i];
+				if(argument[arg]){
+					var sel_data = argument[arg].split('/');
+					choiceText.push(sel_data[0]);
+					targetLabels.push(sel_data[1]);
 				}
-				// this.mViewPictId = this.swapPicture(pict_id_base);// 今表示したキャラを最前列に持ってくる
+			}
+			if(choiceText.length == 0) return;
+			$gameMessage.setChoices(choiceText, Number(argument['default']), Number(argument['cancel']) );
+			$gameMessage.setChoiceBackground(Number(argument['back']));
+			$gameMessage.setChoicePositionType(Number(argument['position']));
+			$gameMessage.setChoiceCallback(function(n) {
+				this.jumpLabel(targetLabels[n]);
+			}.bind(this));
+			this.mWaitMode = 'message';
 		}
 
-		// This only makes the character transparent. It doen't delete the picture.
-		ADV_System.prototype.deleteActor = function(data){
-				var filename = data.f;
-				var name = filename.split('@')[0];
-				if(this.mActiveActors.indexOf(name) != -1){
-						var index = this.mActiveActors.indexOf(name);
-						var imgId = this.mActiveActorsInfo[index].pictureID;
-						var oldX = this.mActiveActorsInfo[index].x;
-						var oldY = this.mActiveActorsInfo[index].y;
-						var waitFrame = data.t;
-						$gameScreen.movePicture(imgId, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
-						this.wait(waitFrame);
-						this.mActiveActorsInfo[index] = {name:name, pictureID:imgId, x:oldX, y:oldY, opacity:0};
-				}
+		if(macro.indexOf('@jump ') != -1){
+			argument = this.makeArg(macro,{});
+			if(argument['f'] == null) return;
+			if( argument['f'] ){
+				this.jumpLabel(argument['f']);
+			}
 		}
 
-		ADV_System.prototype.clearPicCache = function(){
-					for(var id in this.mPicIdInUse){
-							$gameScreen.erasePicture(this.mPicIdInUse[id]);
+		if(macro.indexOf('@insert ') != -1){
+			argument = this.makeArg(macro,{});
+			if(argument['f'] == null) return;
+			if(argument['f']){
+				this.loadScript(argument['f'], false);
+			}
+		}
+
+		if(macro == '@clearPicCache'){
+			this.clearPicCache()
+		}
+
+		if(macro.indexOf('@wait ') != -1){
+			argument = this.makeArg(macro,{});
+			if(argument['t'] == null) return;
+			var waitFrame = argument['t'];
+			this.wait(waitFrame);
+		}
+
+		if(macro.indexOf('@fadein') != -1){
+			argument = this.makeArg(macro,{t:paramSceneFadeFrame});
+			var waitFrame = argument['t'];
+			$gameScreen.startFadeIn(waitFrame);
+			this.wait(waitFrame);
+		}
+
+		if(macro.indexOf('@fadeout') != -1){
+			argument = this.makeArg(macro,{t:paramSceneFadeFrame});
+			var waitFrame = argument['t'];
+			$gameScreen.startFadeOut(waitFrame);
+			this.wait(waitFrame);
+		}
+
+		if( macro.indexOf('@clearStack') != -1 ){
+			this.resetStack();
+		}
+	}
+
+	// set a MACRO that consists of many "macros"
+	ADV_System.prototype.macroChange = function(macro){
+		var c_macro = [];
+		if(macro == '@endg'){
+			argument = this.makeArg(macro,{});
+			c_macro.push('@msgbox');
+			c_macro.push('@chara');
+			c_macro.push('@bg');
+			c_macro.push('@clearPicCache');
+			c_macro.push('@clearStack');
+		}else if(macro == '@end'){
+			c_macro.push('@bgm');
+			c_macro.push('@bgs');
+			c_macro.push('@me');
+			c_macro.push('@msgbox');
+			c_macro.push('@chara');
+			c_macro.push('@bg');
+			c_macro.push('@clearPicCache');
+			c_macro.push('@clearStack');
+		}else{
+			c_macro.push(macro);
+		}
+		return c_macro;
+	}
+
+	// combine arguments passed by the .txt file and variable "init"
+	ADV_System.prototype.makeArg = function(macro,init) {
+		var output = {};
+		var list = macro.split(' ');
+		list.shift();
+		for(var i=0, len=list.length; i<len; i++){
+			var arg = list[i].split('=');
+			var key = arg.shift();
+			arg = arg.join('=');
+			output[key] = arg;
+		}
+		// if not defined in macro, use values in init
+		for(key in init){
+			if(output[key] == null)	output[key] = init[key];
+		}
+		if(output['pos'] != null){
+			var presetName 	= output['pos'];
+			var presetId 	 	= ADV_System.POS_PRESET_NAME.indexOf(presetName);
+			output['x'] 		= ADV_System.POS_PRESET_VALUE[presetId][0];
+			output['y'] 		= ADV_System.POS_PRESET_VALUE[presetId][1];
+		}
+		if(output['f'] != null)       output['f']         = String(output['f']);
+		if(output['x'] != null)       output['x']         = Number(output['x']);
+		if(output['y'] != null)       output['y']         = Number(output['y']);
+		if(output['dx'] != null)      output['dx']        = Number(output['dx']);
+		if(output['dy'] != null)      output['dy']        = Number(output['dy']);
+		if(output['opacity'] != null) output['opacity']   = Number(output['opacity']);
+		if(output['t'] != null)       output['t']         = Number(output['t']);
+		if(output['pitch'] != null)   output['pitch']     = Number(output['pitch']);
+		if(output['vol'] != null)     output['volume']    = Number(output['vol']);
+		return output;
+	}
+
+	// process indent
+	ADV_System.prototype.adjustTextLayout = function(text){
+		var output = "";
+		var cnt = 0; //# of characters in the current line
+		var includeName = (text[0] == "[") ? true : false;
+		if(includeName){
+			text = text.replace(/\]/,']\n' + ADV_System.TEXT_INDENT);
+			var name = text.split(']\n')[0].slice(1);
+			var nameLength = name.length;
+			var colorIndex = ADV_System.TEXT_COLOR_PRESET_NAME.indexOf(name);
+			if(colorIndex != -1){
+				output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][0] + "]";
+			}
+			text = text.replace(']','');
+			text = text.replace('[','');
+		}else{
+			text = "\n" + ADV_System.TEXT_INDENT + "  " + text;
+			cnt = -2;
+		}
+		// process line break
+		for(var t_cnt=0, length=text.length; t_cnt<length; t_cnt++){
+			var c = text[t_cnt];
+			if(includeName){
+				if(cnt > nameLength){
+					includeName = false;
+					cnt = 0;
+					if(colorIndex != -1){
+						output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][1] + "]";
 					}
-					this.mActiveActors = [];
-					this.mActiveActorsInfo = [];
-					this.mPicIdInUse = [];
-					this.mActiveBgIndex = -1;
-		}
-
-		ADV_System.prototype.loadBg = function(data){
-				var filename = data.f;
-				var newX = data.x;
-				var newY = data.y;
-				var newOpacity = data.opacity;
-				var waitFrame = data.t;
-				var index = this.mActiveBgIndex;
-				if(index == 0){
-						var imgId = paramBgPicIdBase + 1;
-						this.mPicIdInUse.push(imgId);
-						$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
-						$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
-						this.wait(waitFrame);
-						$gameScreen.movePicture(imgId-1, 1, newX, newY, 100, 100, 0, 0, 0);
-						this.mActiveBgIndex = 1;
-				}else if(index == 1){
-						var imgId = paramBgPicIdBase;
-						$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 255, 0);
-						$gameScreen.movePicture(imgId+1, 1, newX, newY, 100, 100, 0, 0, waitFrame);
-						this.wait(waitFrame);
-						this.mActiveBgIndex = 0;
-				}else if(index == -1){
-						var imgId = paramBgPicIdBase;
-						this.mPicIdInUse.push(imgId);
-						$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
-						$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
-						this.wait(waitFrame);
-						this.mActiveBgIndex = 0;
 				}
-		}
-
-		ADV_System.prototype.deleteAllBg = function(){
-				var imgId = paramBgPicIdBase;
-				var waitFrame = 60;
-				var oldX = Graphics.boxWidth/2;
-				var oldY = Graphics.boxHeight/2;
-				$gameScreen.movePicture(imgId, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
-				$gameScreen.movePicture(imgId+1, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
-				this.wait(waitFrame);
-				this.mActiveBgIndex = -1;
-		}
-
-		ADV_System.prototype.loadMsgbox = function(data){
-				var filename = data.f;
-				var imgId = parammsgboxPicIdBase;
-				var newX = data.x;
-				var newY = data.y;
-				var newOpacity = data.opacity;
-				var waitFrame = data.t;
-				this.mPicIdInUse.push(imgId);
-				this.mWindowPicEnabled = true;
-				$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
-				$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
-				this.wait(waitFrame);
-		}
-
-		ADV_System.prototype.deleteMsgbox = function(data){
-				var imgId = parammsgboxPicIdBase;
-				var newX = data.x;
-				var newY = data.y;
-				var waitFrame = data.t;
-				this.mWindowPicEnabled = false;
-				$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, 0, 0, waitFrame);
-				this.wait(waitFrame);
-		}
-
-		//***************************************************************
-		// Internal Process
-		//***************************************************************
-		ADV_System.prototype.chomp = function(str) {
-				return str.replace(/[\n\r]/g,"");
-		}
-
-		ADV_System.prototype.localFileDirectoryPath = function() {
-				var path = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/scenario/');
-				if (path.match(/^\/([A-Z]\:)/)) {
-						path = path.slice(1);
+			}
+			if(c == "\\"){
+				var rest = text.substring(t_cnt);
+				var regexp1 = /^\\[a-zA-Z]+\[\d+\]/;
+				var regexp2 = /^\\[|\\\}\{\>\<\^\!\.${]/;
+				var match = rest.match(regexp1) || rest.match(regexp2);
+				var escape = match[0];
+				if(escape){
+					output += escape;
+					t_cnt += escape.length - 1;
 				}
-				return decodeURIComponent(path);
-		}
-
-		ADV_System.prototype.resetStack = function() {
-				this.mStack = [];
-		}
-
-		ADV_System.prototype.jumpLabel = function(label) {
-				var stack = this.mStack[0];
-				while(stack && stack != label){
-						this.mStack.shift();
-						stack = this.mStack[0];
+			}else if(!includeName && cnt >= paramNumCharPerLine){
+				if(paramSpecialCharacters.indexOf(c) != -1){
+					output += c;
+					cnt++;
+				}else{
+					output += "\n" + ADV_System.TEXT_INDENT + "  " + c;
+					cnt = ADV_System.TEXT_INDENT.length + 2;
 				}
+			}else if(c == "\\" && text[t_cnt+1] && text[t_cnt+1] =='n'){	// break line symbol
+				output += "\n" + ADV_System.TEXT_INDENT + "  ";
+				cnt = ADV_System.TEXT_INDENT.length + 2 - 1;
+				t_cnt++;
+			}else{
+				output += c;
+				cnt++;
+			}
+		};
+		output = ADV_System.NAME_INDENT + output;
+		return output;
+	}
+
+	// strip "/voice" from [name/voice]
+	ADV_System.prototype.nameVoiceCut = function(text) {
+		var output = text;
+		if(text.indexOf('/') != -1 && text.indexOf('[') != -1 && text.indexOf(']') != -1){
+			var name = text.split(']');
+			var new_name = name[0];
+			new_name = new_name.split('/');
+			output = text.replace(name[0], new_name[0]);
 		}
+		return output;
+	}
+
+	//***************************************************************
+	// Graphics
+	//***************************************************************
+	ADV_System.prototype.loadActor = function(data){
+		var filename = data.f;
+		var name = filename.split('@')[0];
+		if(this.mActiveActors.indexOf(name) != -1){
+			// this actor is already defined
+			var index = this.mActiveActors.indexOf(name);
+			var imgId = this.mActiveActorsInfo[index].pictureID;
+			var oldX = this.mActiveActorsInfo[index].x;
+			var oldY = this.mActiveActorsInfo[index].y;
+			var newX = (data.x == null) ? oldX : data.x;
+			var newY = (data.y == null) ? oldY : data.y;
+			if(data.dx != null) newX += data.dx;
+			if(data.dy != null) newY += data.dy;
+			var oldOpacity = this.mActiveActorsInfo[index].opacity;
+			var newOpacity = (data.opacity == null) ? oldOpacity : data.opacity;
+			var waitFrame = data['t'];
+			$gameScreen.showPicture(imgId, filename, 1, oldX, oldY, 100, 100, oldOpacity, 0);
+			$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
+			this.wait(waitFrame);
+			this.mActiveActorsInfo[index] = {name:name, pictureID:imgId, x:newX, y:newY, opacity:newOpacity};
+		}else{
+			// this actor is not defined
+			var index = this.mActiveActors.length;
+			var imgId = paramCharaPicIdBase + index;
+			var newX = (data.x == null) ? Graphics.boxWidth/2 : data.x;
+			var newY = (data.y == null) ? Graphics.boxHeight/2: data.y;
+			var newOpacity = data.opacity;
+			var waitFrame = data.t;
+			this.mActiveActors[index] = name;
+			this.mActiveActorsInfo.push({name:name, pictureID:imgId, x:newX, y:newY, opacity:newOpacity});
+			this.mPicIdInUse.push(imgId);
+			$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
+			$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
+			this.wait(waitFrame);
+		}
+		// this.mViewPictId = this.swapPicture(pict_id_base);// 今表示したキャラを最前列に持ってくる
+	}
+
+	// This only makes the character transparent. It doen't delete the picture.
+	ADV_System.prototype.deleteActor = function(data){
+		var filename = data.f;
+		var name = filename.split('@')[0];
+		if(this.mActiveActors.indexOf(name) != -1){
+			var index = this.mActiveActors.indexOf(name);
+			var imgId = this.mActiveActorsInfo[index].pictureID;
+			var oldX = this.mActiveActorsInfo[index].x;
+			var oldY = this.mActiveActorsInfo[index].y;
+			var waitFrame = data.t;
+			$gameScreen.movePicture(imgId, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
+			this.wait(waitFrame);
+			this.mActiveActorsInfo[index] = {name:name, pictureID:imgId, x:oldX, y:oldY, opacity:0};
+		}
+	}
+
+	ADV_System.prototype.clearPicCache = function(){
+		for(var id in this.mPicIdInUse){
+    		$gameScreen.erasePicture(this.mPicIdInUse[id]);
+		}
+		this.mActiveActors = [];
+		this.mActiveActorsInfo = [];
+		this.mPicIdInUse = [];
+		this.mActiveBgIndex = -1;
+	}
+
+	ADV_System.prototype.loadBg = function(data){
+		var filename = data.f;
+		var newX = data.x;
+		var newY = data.y;
+		var newOpacity = data.opacity;
+		var waitFrame = data.t;
+		var index = this.mActiveBgIndex;
+		if(index == 0){
+			var imgId = paramBgPicIdBase + 1;
+			this.mPicIdInUse.push(imgId);
+			$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
+			$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
+			this.wait(waitFrame);
+			$gameScreen.movePicture(imgId-1, 1, newX, newY, 100, 100, 0, 0, 0);
+			this.mActiveBgIndex = 1;
+		}else if(index == 1){
+			var imgId = paramBgPicIdBase;
+			$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 255, 0);
+			$gameScreen.movePicture(imgId+1, 1, newX, newY, 100, 100, 0, 0, waitFrame);
+			this.wait(waitFrame);
+			this.mActiveBgIndex = 0;
+		}else if(index == -1){
+			var imgId = paramBgPicIdBase;
+			this.mPicIdInUse.push(imgId);
+			$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
+			$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
+			this.wait(waitFrame);
+			this.mActiveBgIndex = 0;
+		}
+	}
+
+	ADV_System.prototype.deleteAllBg = function(){
+		var imgId = paramBgPicIdBase;
+		var waitFrame = 60;
+		var oldX = Graphics.boxWidth/2;
+		var oldY = Graphics.boxHeight/2;
+		$gameScreen.movePicture(imgId, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
+		$gameScreen.movePicture(imgId+1, 1, oldX, oldY, 100, 100, 0, 0, waitFrame);
+		this.wait(waitFrame);
+		this.mActiveBgIndex = -1;
+	}
+
+	ADV_System.prototype.loadMsgbox = function(data){
+		var filename = data.f;
+		var imgId = parammsgboxPicIdBase;
+		var newX = data.x;
+		var newY = data.y;
+		var newOpacity = data.opacity;
+		var waitFrame = data.t;
+		this.mPicIdInUse.push(imgId);
+		this.mWindowPicEnabled = true;
+		$gameScreen.showPicture(imgId, filename, 1, newX, newY, 100, 100, 0, 0);
+		$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, newOpacity, 0, waitFrame);
+		this.wait(waitFrame);
+	}
+
+	ADV_System.prototype.deleteMsgbox = function(data){
+		var imgId = parammsgboxPicIdBase;
+		var newX = data.x;
+		var newY = data.y;
+		var waitFrame = data.t;
+		this.mWindowPicEnabled = false;
+		$gameScreen.movePicture(imgId, 1, newX, newY, 100, 100, 0, 0, waitFrame);
+		this.wait(waitFrame);
+	}
+
+	//***************************************************************
+	// Internal Process
+	//***************************************************************
+	ADV_System.prototype.chomp = function(str) {
+		return str.replace(/[\n\r]/g,"");
+	}
+
+	ADV_System.prototype.localFileDirectoryPath = function() {
+		var path = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/scenario/');
+		if (path.match(/^\/([A-Z]\:)/)) {
+				path = path.slice(1);
+		}
+		return decodeURIComponent(path);
+	}
+
+	ADV_System.prototype.resetStack = function() {
+		this.mStack = [];
+	}
+
+	ADV_System.prototype.jumpLabel = function(label) {
+		var stack = this.mStack[0];
+		while(stack && stack != label){
+				this.mStack.shift();
+				stack = this.mStack[0];
+		}
+	}
 
     ADV_System.prototype.update = function(){
         if(!this.mRun) return;// adv system is not running
@@ -884,126 +882,125 @@
         this.stackRun();
     }
 
-		ADV_System.prototype.updateWait = function() {
-				var waiting = false;
-				switch (this.mWaitMode) {
-						case 'message':
-								waiting = $gameMessage.isBusy();
-								break;
-						case 'transfer':
-								waiting = $gamePlayer.isTransferring();
-								break;
-						case 'scroll':
-								waiting = $gameMap.isScrolling();
-								break;
-						case 'route':
-								waiting = this.mWaitData.isMoveRouteForcing();
-								break;
-						case 'animation':
-								waiting = this.mWaitData.isAnimationPlaying();
-								break;
-						case 'balloon':
-								waiting = this.mWaitData.isBalloonPlaying();
-								break;
-						case 'gather':
-								waiting = $gamePlayer.areFollowersGathering();
-								break;
-						case 'action':
-								waiting = BattleManager.isActionForced();
-								break;
-						case 'video':
-								waiting = Graphics.isVideoPlaying();
-								break;
-						case 'image':
-								waiting = !ImageManager.isReady();
-								break;
-				}
-				if (!waiting) {
-						this.mWaitMode = '';
-						this.mWaitData = null;
-				}
-				return waiting;
+	ADV_System.prototype.updateWait = function() {
+		var waiting = false;
+		switch (this.mWaitMode) {
+			case 'message':
+				waiting = $gameMessage.isBusy();
+				break;
+			case 'transfer':
+				waiting = $gamePlayer.isTransferring();
+				break;
+			case 'scroll':
+				waiting = $gameMap.isScrolling();
+				break;
+			case 'route':
+				waiting = this.mWaitData.isMoveRouteForcing();
+				break;
+			case 'animation':
+				waiting = this.mWaitData.isAnimationPlaying();
+				break;
+			case 'balloon':
+				waiting = this.mWaitData.isBalloonPlaying();
+				break;
+			case 'gather':
+				waiting = $gamePlayer.areFollowersGathering();
+				break;
+			case 'action':
+				waiting = BattleManager.isActionForced();
+				break;
+			case 'video':
+				waiting = Graphics.isVideoPlaying();
+				break;
+			case 'image':
+				waiting = !ImageManager.isReady();
+				break;
 		}
-
-		ADV_System.prototype.updateWaitCount = function() {
-				if (this.mWaitCount > 0) {
-						this.mWaitCount--;
-						return true;
-				}
-				return false;
+		if (!waiting) {
+			this.mWaitMode = '';
+			this.mWaitData = null;
 		}
+		return waiting;
+	}
 
-		ADV_System.prototype.wait = function(duration) {
-				this.mWaitCount = duration;
+	ADV_System.prototype.updateWaitCount = function() {
+		if (this.mWaitCount > 0) {
+    		this.mWaitCount--;
+    		return true;
 		}
+		return false;
+	}
 
-		//***************************************************************
-		// non adv class
-		//***************************************************************
-    	var _ritzadv_DataManager_createGameObjects = DataManager.createGameObjects;
-    	DataManager.createGameObjects = function() {
-    		_ritzadv_DataManager_createGameObjects.call(this);
-    		$advSystem = new ADV_System();
-    	};
+	ADV_System.prototype.wait = function(duration) {
+		this.mWaitCount = duration;
+	}
 
-			var _ritzadv_Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
-			Game_Interpreter.prototype.pluginCommand = function (command, args) {
-					_ritzadv_Game_Interpreter_pluginCommand.call(this, command, args);
-					if (command === 'AdvLoad') {
-							$advSystem.loadScript(args[0]);
-					}
-			};
+	//***************************************************************
+	// non adv class
+	//***************************************************************
+	var _ritzadv_DataManager_createGameObjects = DataManager.createGameObjects;
+	DataManager.createGameObjects = function() {
+    	_ritzadv_DataManager_createGameObjects.call(this);
+    	$advSystem = new ADV_System();
+	};
 
-    	var _ritzadv_Game_Map_update = Game_Map.prototype.update;
-    	Game_Map.prototype.update = function(sceneActive) {
-	    		_ritzadv_Game_Map_update.call(this,sceneActive);
-	    		$advSystem.update();
-    	};
+	var _ritzadv_Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
+	Game_Interpreter.prototype.pluginCommand = function (command, args) {
+		_ritzadv_Game_Interpreter_pluginCommand.call(this, command, args);
+		if (command === 'AdvLoad') {
+			$advSystem.loadScript(args[0]);
+		}
+	};
 
-    	var _ritzadv_Game_Interpreter_initialize = Game_Interpreter.prototype.initialize;
-    	Game_Interpreter.prototype.initialize = function(depth) {
-    		_ritzadv_Game_Interpreter_initialize.call(this,depth);
-    		this._mAdvRun = false;
-    	};
+	var _ritzadv_Game_Map_update = Game_Map.prototype.update;
+	Game_Map.prototype.update = function(sceneActive) {
+		_ritzadv_Game_Map_update.call(this,sceneActive);
+		$advSystem.update();
+	};
 
-    	// overwrite
-    	Game_Interpreter.prototype.updateWait = function() {
-	    		//return this.updateWaitCount() || this.updateWaitMode();
-	    		return this.updateWaitCount() || this.updateWaitMode() || this._mAdvRun;
-    	};
+	var _ritzadv_Game_Interpreter_initialize = Game_Interpreter.prototype.initialize;
+	Game_Interpreter.prototype.initialize = function(depth) {
+		_ritzadv_Game_Interpreter_initialize.call(this,depth);
+		this._mAdvRun = false;
+	};
 
-    	// New
-    	Game_Interpreter.prototype.setAdvRun = function(flag) {
-	    		this._mAdvRun = flag;
-	    		if (this._childInterpreter) this._childInterpreter.setAdvRun(flag);
-    	};
+	// overwrite
+	Game_Interpreter.prototype.updateWait = function() {
+		//return this.updateWaitCount() || this.updateWaitMode();
+		return this.updateWaitCount() || this.updateWaitMode() || this._mAdvRun;
+	};
 
-			AudioManager.playVoice = function(voice) {
-					if (voice.name) {
-							this._seBuffers = this._seBuffers.filter(function(audio) {
-								if(audio._url.indexOf('/voice/') != -1){
-										return audio.isPlaying();
-								}
-								return true;
-							});
-							var buffer = this.createBuffer('voice', voice.name);
-							this.updateVoiceParameters(buffer, voice);
-							buffer.play(false);
-							this._seBuffers.push(buffer);
-					}
-			};
+	// New
+	Game_Interpreter.prototype.setAdvRun = function(flag) {
+		this._mAdvRun = flag;
+		if (this._childInterpreter) this._childInterpreter.setAdvRun(flag);
+	};
 
-			AudioManager.stopVoice = function() {
-					this._seBuffers.forEach(function(buffer) {
-							if( buffer._url.indexOf('/voice/') != -1 ){
-									buffer.stop();
-							}
-					});
-			};
+	AudioManager.playVoice = function(voice) {
+		if (voice.name) {
+			this._seBuffers = this._seBuffers.filter(function(audio) {
+    			if(audio._url.indexOf('/voice/') != -1){
+    				return audio.isPlaying();
+    			}
+    			return true;
+			});
+			var buffer = this.createBuffer('voice', voice.name);
+			this.updateVoiceParameters(buffer, voice);
+			buffer.play(false);
+			this._seBuffers.push(buffer);
+		}
+	};
 
-			AudioManager.updateVoiceParameters = function(buffer, voice) {
-					this.updateBufferParameters(buffer, paramVoiceVolume, voice);
-			};
+	AudioManager.stopVoice = function() {
+    	this._seBuffers.forEach(function(buffer) {
+			if( buffer._url.indexOf('/voice/') != -1 ){
+				buffer.stop();
+			}
+    	});
+	};
 
+	AudioManager.updateVoiceParameters = function(buffer, voice) {
+		this.updateBufferParameters(buffer, paramVoiceVolume, voice);
+	};
 
 })();
