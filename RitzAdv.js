@@ -252,11 +252,11 @@
  */
 
 (function() {
-		const pluginName = 'RitzAdv';
+	const pluginName = 'RitzAdv';
 	//=============================================================================
-    // PluginManager Variables
-    // Parameters obtained from the plugin manager
-    //=============================================================================
+	// PluginManager Variables
+	// Parameters obtained from the plugin manager
+	//=============================================================================
 	const myParameters             = PluginManager.parameters(pluginName);
 
 	const paramNumCharPerLine      = Number(myParameters['characterPerLine']);
@@ -283,15 +283,15 @@
 	// ADV_System
 	//***************************************************************
 	function ADV_System() {
-			this.initialize.apply(this, arguments);
+		this.initialize.apply(this, arguments);
 	}
 
-	ADV_System.NAME_INDENT 								= new Array(paramNameIndent + 1).join(' ');
-	ADV_System.TEXT_INDENT 								= new Array(paramTextIndent + 1).join(' ');
-	ADV_System.TEXT_COLOR_PRESET_NAME 		= [];
-	ADV_System.TEXT_COLOR_PRESET_VALUE 		= [];
-	ADV_System.POS_PRESET_NAME 						= [];
-	ADV_System.POS_PRESET_VALUE 					= [];
+	ADV_System.NAME_INDENT = new Array(paramNameIndent + 1).join(' ');
+	ADV_System.TEXT_INDENT= new Array(paramTextIndent + 1).join(' ');
+	ADV_System.TEXT_COLOR_PRESET_NAME = [];
+	ADV_System.TEXT_COLOR_PRESET_VALUE = [];
+	ADV_System.POS_PRESET_NAME = [];
+	ADV_System.POS_PRESET_VALUE = [];
 
 
 	ADV_System.prototype.initialize = function(){
