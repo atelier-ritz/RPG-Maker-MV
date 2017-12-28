@@ -6,6 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.0.2 2017/12/28 Rewrote adjustTextLayout()/
 // 1.0.1 2017/12/28 Fixed inconsistence use of spaces and tabs.
 // 1.0.0 2017/12/24 First Version.
 // 0.0.1 2017/12/12 Start development.
@@ -252,15 +253,6 @@
 
 (function() {
 		const pluginName = 'RitzAdv';
-
-    //=============================================================================
-	// print
-	//=============================================================================
-    p = function(value) {
-        console.log.apply(console, arguments);
-        SceneManager.getNwJs().showDevTools();
-    };
-
 	//=============================================================================
     // PluginManager Variables
     // Parameters obtained from the plugin manager
@@ -643,65 +635,51 @@
 		return output;
 	}
 
-	// process indent
 	ADV_System.prototype.adjustTextLayout = function(text){
+		// process indent and name
 		var output = "";
-		var cnt = 0; //# of characters in the current line
+		var cnt = ADV_System.TEXT_INDENT.length + 2;//# of characters in the current line
 		var includeName = (text[0] == "[") ? true : false;
 		if(includeName){
-			text = text.replace(/\]/,']\n' + ADV_System.TEXT_INDENT);
-			var name = text.split(']\n')[0].slice(1);
-			var nameLength = name.length;
+			var namePrefix = "【";
+			var nameSuffix = "】";
+			var name = text.split(']')[0].slice(1);
+			var words = text.substring(text.indexOf(']')+1);
+			var nameOutput = namePrefix + name + nameSuffix;
 			var colorIndex = ADV_System.TEXT_COLOR_PRESET_NAME.indexOf(name);
 			if(colorIndex != -1){
-				output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][0] + "]";
+				var nameColor = ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][0];
+				var textColor = ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][1];
+				nameOutput = "\\c["+nameColor+"]" + nameOutput + "\\c["+textColor+"]";
 			}
-			text = text.replace(']','');
-			text = text.replace('[','');
+			output += ADV_System.NAME_INDENT + nameOutput + "\n" + ADV_System.TEXT_INDENT;
+			cnt = ADV_System.TEXT_INDENT.length;
 		}else{
-			text = "\n" + ADV_System.TEXT_INDENT + "  " + text;
-			cnt = -2;
+			var words = text;
+			output += "\n" + ADV_System.TEXT_INDENT + "  ";
+			cnt -= 1;
 		}
-		// process line break
-		for(var t_cnt=0, length=text.length; t_cnt<length; t_cnt++){
-			var c = text[t_cnt];
-			if(includeName){
-				if(cnt > nameLength){
-					includeName = false;
-					cnt = 0;
-					if(colorIndex != -1){
-						output += "\\c[" + ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][1] + "]";
-					}
-				}
-			}
+		// process main lines
+		for(var i=0, length=words.length; i<length; i++){
+			var c = words[i];
 			if(c == "\\"){
-				var rest = text.substring(t_cnt);
+				var rest = words.substring(i);
 				var regexp1 = /^\\[a-zA-Z]+\[\d+\]/;
 				var regexp2 = /^\\[|\\\}\{\>\<\^\!\.${]/;
 				var match = rest.match(regexp1) || rest.match(regexp2);
 				var escape = match[0];
 				if(escape){
 					output += escape;
-					t_cnt += escape.length - 1;
+					i += escape.length - 1;
 				}
-			}else if(!includeName && cnt >= paramNumCharPerLine){
-				if(paramSpecialCharacters.indexOf(c) != -1){
-					output += c;
-					cnt++;
-				}else{
-					output += "\n" + ADV_System.TEXT_INDENT + "  " + c;
-					cnt = ADV_System.TEXT_INDENT.length + 2;
-				}
-			}else if(c == "\\" && text[t_cnt+1] && text[t_cnt+1] =='n'){	// break line symbol
-				output += "\n" + ADV_System.TEXT_INDENT + "  ";
-				cnt = ADV_System.TEXT_INDENT.length + 2 - 1;
-				t_cnt++;
-			}else{
+			}else if(cnt < paramNumCharPerLine || paramSpecialCharacters.indexOf(c) != -1){
 				output += c;
 				cnt++;
+			}else{
+				output += "\n" + ADV_System.TEXT_INDENT + "  " + c;
+				cnt = ADV_System.TEXT_INDENT.length + 2;
 			}
-		};
-		output = ADV_System.NAME_INDENT + output;
+		}
 		return output;
 	}
 
