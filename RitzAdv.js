@@ -6,6 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.1.1 2018/01/18 Added image preload when reading a scenario file.
 // 1.1.0 2018/01/18 Fixed an issue that scenarios cannot be loaded on a browser.
 // 1.0.2 2017/12/28 Rewrote adjustTextLayout().
 // 1.0.1 2017/12/28 Fixed inconsistence use of spaces and tabs.
@@ -333,6 +334,20 @@
 		var file_data = this.loadScenario(filename);
 		var commandList = file_data.split('\n');
 		var new_stack = [];
+		// Preload images
+		for(var i=0, len=commandList.length; i<len; i++){
+			var text = commandList[i];
+			text = this.chomp(text);
+			text = text.trim();
+			if(text.includes("@bg ",0) || text.includes("@chara ",0)){
+				var macroLine = this.macroChange(this.chomp(text));
+				macroLine = macroLine[0];
+				var arg = this.makeArg(macroLine,{});
+				if(arg["f"].substr(-1) != "@") ImageManager.requestPicture(arg["f"]);
+			}else{
+				continue;
+			}
+		}
 		for(var i=0, len=commandList.length; i<len; i++){
 			var text = commandList[i];
 			var add_stack = [];
@@ -407,7 +422,6 @@
 	// run lines that start with @
 	ADV_System.prototype.macroRun = function(macro) {
 		var argument = {};
-
 		if(macro.indexOf('@bgm ') != -1){
 			argument = this.makeArg(macro,{pan:0, pitch:100, vol:90, t:1000});
 			argument['name'] 		= argument['f'];
