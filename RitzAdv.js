@@ -6,7 +6,8 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
-// 1.0.2 2017/12/28 Rewrote adjustTextLayout()/
+// 1.1.0 2018/01/18 Fixed an issue that scenarios cannot be loaded on a browser.
+// 1.0.2 2017/12/28 Rewrote adjustTextLayout().
 // 1.0.1 2017/12/28 Fixed inconsistence use of spaces and tabs.
 // 1.0.0 2017/12/24 First Version.
 // 0.0.1 2017/12/12 Start development.
@@ -329,9 +330,7 @@
 	ADV_System.prototype.loadScript = function(filename,reset) {
 		if(reset === undefined) reset = true;
 		if(reset) this.resetStack();
-		var fs = require('fs');
-		var filepath = this.localFileDirectoryPath() + filename + '.txt';
-		var file_data = fs.readFileSync(filepath, 'utf-8');
+		var file_data = this.loadScenario(filename);
 		var commandList = file_data.split('\n');
 		var new_stack = [];
 		for(var i=0, len=commandList.length; i<len; i++){
@@ -843,6 +842,30 @@
 		return decodeURIComponent(path);
 	}
 
+	ADV_System.prototype.loadScenario = function(filename) {
+		url = this.localFileDirectoryPath() + filename + '.txt';
+		// PC: access via FileSystem
+		if(Utils.isNwjs()){
+			var fs = require('fs');
+			var file_data = fs.readFileSync(url, 'utf-8');
+			return file_data;
+		}else{
+		// Browser: access via xhr
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function(){
+				if (xhr.readyState === 4){  // Makes sure the document is ready to parse.
+					if(xhr.status === 200){  // Makes sure it's found the file.
+						return xhr.responseText;
+				    }
+				}
+			}
+			xhr.open('GET', url, false);
+			xhr.send(null);
+			var file_data = xhr.onreadystatechange();
+			return file_data;
+		}
+	};
+
 	ADV_System.prototype.resetStack = function() {
 		this.mStack = [];
 	}
@@ -913,6 +936,8 @@
 	ADV_System.prototype.wait = function(duration) {
 		this.mWaitCount = duration;
 	}
+
+
 
 	//***************************************************************
 	// non adv class
