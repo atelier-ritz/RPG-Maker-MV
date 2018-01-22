@@ -6,7 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
-// 1.1.3 2018/01/21 The spaces at the beginning of each line will be placed all at once.
+// 1.1.3 2018/01/21 The spaces at the beginning of each line will be displayed all at once.
 // 1.1.2 2018/01/20 Behavior changed: "end" macro won't erase msgbox anymore.
 // 1.1.1 2018/01/18 Added image preload when reading a scenario file.
 // 1.1.0 2018/01/18 Fixed an issue that scenarios cannot be loaded on a browser.
