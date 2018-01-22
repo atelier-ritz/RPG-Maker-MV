@@ -6,6 +6,8 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.1.3 2018/01/21 The spaces at the beginning of each line will be placed all at once.
+// 1.1.2 2018/01/20 Behavior changed: "end" macro won't erase msgbox anymore.
 // 1.1.1 2018/01/18 Added image preload when reading a scenario file.
 // 1.1.0 2018/01/18 Fixed an issue that scenarios cannot be loaded on a browser.
 // 1.0.2 2017/12/28 Rewrote adjustTextLayout().
@@ -595,7 +597,6 @@
 		var c_macro = [];
 		if(macro == '@endg'){
 			argument = this.makeArg(macro,{});
-			c_macro.push('@msgbox');
 			c_macro.push('@chara');
 			c_macro.push('@bg');
 			c_macro.push('@clearPicCache');
@@ -604,7 +605,6 @@
 			c_macro.push('@bgm');
 			c_macro.push('@bgs');
 			c_macro.push('@me');
-			c_macro.push('@msgbox');
 			c_macro.push('@chara');
 			c_macro.push('@bg');
 			c_macro.push('@clearPicCache');
@@ -654,8 +654,8 @@
 		var cnt = ADV_System.TEXT_INDENT.length + 2;//# of characters in the current line
 		var includeName = (text[0] == "[") ? true : false;
 		if(includeName){
-			var namePrefix = "【";
-			var nameSuffix = "】";
+			var namePrefix = "";
+			var nameSuffix = "";
 			var name = text.split(']')[0].slice(1);
 			var words = text.substring(text.indexOf(']')+1);
 			var nameOutput = namePrefix + name + nameSuffix;
@@ -665,11 +665,11 @@
 				var textColor = ADV_System.TEXT_COLOR_PRESET_VALUE[colorIndex][1];
 				nameOutput = "\\c["+nameColor+"]" + nameOutput + "\\c["+textColor+"]";
 			}
-			output += ADV_System.NAME_INDENT + nameOutput + "\n" + ADV_System.TEXT_INDENT;
+			output += "\\>" + ADV_System.NAME_INDENT + "\\<" + nameOutput + "\n" + "\\>" + ADV_System.TEXT_INDENT + "\\<";
 			cnt = ADV_System.TEXT_INDENT.length;
 		}else{
 			var words = text;
-			output += "\n" + ADV_System.TEXT_INDENT + "  ";
+			output += "\n" + "\\>" + ADV_System.TEXT_INDENT + "\\<";
 			cnt -= 1;
 		}
 		// process main lines
@@ -689,7 +689,7 @@
 				output += c;
 				cnt++;
 			}else{
-				output += "\n" + ADV_System.TEXT_INDENT + "  " + c;
+				output += "\n" + "\\>" + ADV_System.TEXT_INDENT + "  " + "\\<"+ c;
 				cnt = ADV_System.TEXT_INDENT.length + 2;
 			}
 		}
