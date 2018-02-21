@@ -2,6 +2,7 @@
 // RitzAdv.js
 // ----------------------------------------------------------------------------
 // Copyright (c) 2017 atelier_ritz
+// Credit: I based this plugin on dieselmine's work. (Twitter: https://twitter.com/dieselmine) 
 // This software is released under the MIT License.
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
