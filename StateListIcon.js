@@ -6,7 +6,6 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
-// 1.0.1 2019/03/14 ステートアイコンを描画するレイヤーオプションを追加。
 // 1.0.0 2019/03/14 初版
 // ----------------------------------------------------------------------------
 // [Twitter]: https://twitter.com/atelier_ritz/
@@ -22,17 +21,23 @@
  * @default 0.7
  * @type number
  * @decimals 2
+ * @max 2
+ * @min -1
  *
  * @param StateIconPosY
  * @desc 味方ステートアイコンのy相対位置です。アクターグラフィックの高さの倍率で指定。(Default:0.5)
  * @default 0.5
  * @type number
  * @decimals 2
+ * @max 2
+ * @min -1
  *
  * @param StateIconZ
- * @desc ステートアイコンのZレイヤーです。0:影より下 1:影より上だが武器より下 2:武器より上だがキャラクターより下 3:キャラクターより上だが状態異常アニメより下 4:一番上　(Default:2)
+ * @desc ステートアイコンのZレイヤーです。0:影より下 1:影より上 2:武器より上 3:キャラより上 4:状態異常アニメより上　(Default:0)
  * @default 0
  * @type number
+ * @max 4
+ * @min 0
  *
  * @param AllyWindowStateIcon
  * @desc 戦闘中下のウィンドウの名前の右にアイコンを描画する。(Default:OFF)
