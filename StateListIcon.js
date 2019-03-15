@@ -1,5 +1,5 @@
 //=============================================================================
-// Ritz_Statelist.js
+// StateListIcon.js
 // ----------------------------------------------------------------------------
 // (C)2019 Atelier_Ritz
 // This software is released under the MIT License.
@@ -94,10 +94,17 @@ function Sprite_StateIconChild() {
     // Sprite_Actor
     //  味方SVの右にステートアイコンを表示します。
     //=============================================================================
-      var _Sprite_Actor_initMembers      = Sprite_Actor.prototype.initMembers;
       Sprite_Actor.prototype.initMembers = function() {
-          _Sprite_Actor_initMembers.apply(this, arguments);
+          Sprite_Battler.prototype.initMembers.call(this);
+          this._battlerName = '';
+          this._motion = null;
+          this._motionCount = 0;
+          this._pattern = 0;
+          this.createShadowSprite();
+          this.createWeaponSprite();
           this.createStateIconSprite();
+          this.createMainSprite();
+          this.createStateSprite();
       };
 
       Sprite_Actor.prototype.createStateIconSprite = function() {
