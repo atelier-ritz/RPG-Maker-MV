@@ -1,11 +1,12 @@
 //=============================================================================
-// StateListIcon.js
+// Ritz_Statelist.js
 // ----------------------------------------------------------------------------
 // (C)2019 Atelier_Ritz
 // This software is released under the MIT License.
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.0.1 2019/03/14 ステートアイコンを描画するレイヤーオプションを追加。
 // 1.0.0 2019/03/14 初版
 // ----------------------------------------------------------------------------
 // [Twitter]: https://twitter.com/atelier_ritz/
@@ -27,6 +28,11 @@
  * @default 0.5
  * @type number
  * @decimals 2
+ *
+ * @param StateIconZ
+ * @desc ステートアイコンのZレイヤーです。0:影より下 1:影より上だが武器より下 2:武器より上だがキャラクターより下 3:キャラクターより上だが状態異常アニメより下 4:一番上　(Default:2)
+ * @default 0
+ * @type number
  *
  * @param AllyWindowStateIcon
  * @desc 戦闘中下のウィンドウの名前の右にアイコンを描画する。(Default:OFF)
@@ -88,28 +94,22 @@ function Sprite_StateIconChild() {
     //=============================================================================
     var paramStateIconPosX        = getParamFloat(['StateIconPosX']);
     var paramStateIconPosY        = getParamFloat(['StateIconPosY']);
+    var paramStateIconZ           = getParamNumber(['StateIconZ'],0,4);
     var paramAllyWindowStateIcon  = getParamBoolean(['AllyWindowStateIcon']);
 
     //=============================================================================
     // Sprite_Actor
     //  味方SVの右にステートアイコンを表示します。
     //=============================================================================
+      var _Sprite_Actor_initMembers      = Sprite_Actor.prototype.initMembers;
       Sprite_Actor.prototype.initMembers = function() {
-          Sprite_Battler.prototype.initMembers.call(this);
-          this._battlerName = '';
-          this._motion = null;
-          this._motionCount = 0;
-          this._pattern = 0;
-          this.createShadowSprite();
-          this.createWeaponSprite();
+          _Sprite_Actor_initMembers.apply(this, arguments);
           this.createStateIconSprite();
-          this.createMainSprite();
-          this.createStateSprite();
       };
 
       Sprite_Actor.prototype.createStateIconSprite = function() {
           this._stateIconSprite = new Sprite_StateIcon();
-          this.addChild(this._stateIconSprite);
+          this.addChildAt(this._stateIconSprite,paramStateIconZ);
       };
 
       var _Sprite_Actor_setBattler      = Sprite_Actor.prototype.setBattler;
