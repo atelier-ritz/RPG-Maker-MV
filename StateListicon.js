@@ -6,6 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.1.0 2019/03/16 バフデバフのアイコンをウィンドウ下に並べる機能を追加。
 // 1.0.2 2019/03/15 味方アイコンをステート数に応じて右にずらす仕様に変更。
 // 1.0.1 2019/03/14 Zレイヤーを追加
 // 1.0.0 2019/03/14 初版
@@ -15,7 +16,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc List State Plugin
+ * @plugindesc Ver1.1.0/ステートアイコンの一部をサイドビューキャラの横に表示します。
  * @author Ritz
  *
  * @param StateIconPosX
@@ -41,13 +42,20 @@
  * @max 4
  * @min 0
  *
- * @param AllyWindowStateIcon
- * @desc 戦闘中下のウィンドウの名前の右にアイコンを描画する。(Default:OFF)
- * @default false
+ * @param ShowBuffInStatusWindow
+ * @desc 戦闘中下のウィンドウに、バフ（攻撃力アップなど）のアイコンを表示します。
+ * @default true
+ * @type boolean
+ *
+ * @param ShowDebuffInStatusWindow
+ * @desc 戦闘中下のウィンドウに、デバフ（攻撃力ダウンなど）のアイコンを表示します。
+ * @default true
  * @type boolean
  *
  * @help
  * 注意：このプラグインはサイドビューのみに対応しております。
+ * ツクールMVデフォルトの仕様では、戦闘中すべてのステートアイコンが下のウィンドウに表示されます。
+ * このプラグインは、一部のステートアイコン、バフアイコン、デバフアイコンをキャラクターの横へ移動させます。
  * このプラグインにはプラグインコマンドはありません。
  *
  * 利用規約：
@@ -88,6 +96,31 @@ function Sprite_StateIconChild() {
         return (value || '').toUpperCase() === 'ON' || (value || '').toUpperCase() === 'TRUE';
     };
 
+    var getParamString = function(paramNames) {
+        var value = getParamOther(paramNames);
+        return value == null ? '' : value;
+    };
+
+    var getParamArrayString = function (paramNames) {
+        var values = getParamString(paramNames).split(',');
+        for (var i = 0; i < values.length; i++) values[i] = values[i].trim();
+        return values;
+    };
+
+    var getParamArrayNumber = function (paramNames, min, max) {
+        var values = getParamArrayString(paramNames);
+        if (arguments.length < 2) min = -Infinity;
+        if (arguments.length < 3) max = Infinity;
+        for (var i = 0; i < values.length; i++) {
+            if (!isNaN(parseInt(values[i], 10))) {
+                values[i] = (parseInt(values[i], 10) || 0).clamp(min, max);
+            } else {
+                values.splice(i--, 1);
+            }
+        }
+        return values;
+    };
+
     var getParamOther = function(paramNames) {
         if (!Array.isArray(paramNames)) paramNames = [paramNames];
         for (var i = 0; i < paramNames.length; i++) {
@@ -103,7 +136,21 @@ function Sprite_StateIconChild() {
     var paramStateIconPosX        = getParamFloat(['StateIconPosX']);
     var paramStateIconPosY        = getParamFloat(['StateIconPosY']);
     var paramStateIconZ           = getParamNumber(['StateIconZ'],0,4);
-    var paramAllyWindowStateIcon  = getParamBoolean(['AllyWindowStateIcon']);
+    var paramIconIDForWin         = getParamArrayNumber(['IconIDForStatusWindow']);
+    var paramShowBuff             = getParamBoolean(['ShowBuffInStatusWindow']);
+    var paramShowDebuff           = getParamBoolean(['ShowDebuffInStatusWindow']);
+
+    // var paramWinIDs = [];
+    //
+    // var isIconShownInWindow = function(iconID) {
+    //     if (paramShowBuff && 32 <= iconID && iconID < 48) return true;
+    //     if (paramShowDebuff && 48 <= iconID && iconID < 60) return true;
+    //     // paramIconIDForWin.some(function(id){
+    //     //   return id === iconID;
+    //     // })
+    //     // // if ()
+    //     // return false;
+    // };
 
     //=============================================================================
     // Sprite_Actor
@@ -139,7 +186,7 @@ function Sprite_StateIconChild() {
           var cw = this._mainSprite.bitmap.width/9;
           var ch = this._mainSprite.bitmap.height/6;
           var numStates = this._stateIconSprite._icons.length;
-          this._stateIconSprite.x = Math.round(cw * paramStateIconPosX + 20 * numStates);
+          this._stateIconSprite.x = Math.round(cw * paramStateIconPosX + 16 * numStates);
           this._stateIconSprite.y = -Math.round(ch * paramStateIconPosY);
       };
 
@@ -147,10 +194,26 @@ function Sprite_StateIconChild() {
     // Window_BattleStatus
     //  The window for displaying the status of party members on the battle screen.
     //=============================================================================
-    Window_BattleStatus.prototype.drawBasicArea = function(rect, actor) {
-        this.drawActorName(actor, rect.x + 0, rect.y, 150);
-        if (paramAllyWindowStateIcon) {
-          this.drawActorIcons(actor, rect.x + 156, rect.y, rect.width - 156);
+    Window_BattleStatus.prototype.drawActorIcons = function(actor, x, y, width) {
+        width = width || 144;
+        var icons = actor.allIcons().slice(0, Math.floor(width / Window_Base._iconWidth));
+        icons = icons.filter(function(element){
+          if(paramShowBuff){
+            if(paramShowDebuff){
+              return 32 <= element && element < 64
+            }else{
+              return 32 <= element && element < 48
+            }
+          }else{
+            if(paramShowDebuff){
+              return 48 <= element && element < 64
+            }else{
+              return false
+            }
+          }
+        });
+        for (var i = 0; i < icons.length; i++) {
+            this.drawIcon(icons[i], x + Window_Base._iconWidth * i, y + 2);
         }
     };
 
@@ -179,6 +242,23 @@ function Sprite_StateIconChild() {
         var icons = [];
         if (this._battler && this._battler.isAlive()) {
             icons = this._battler.allIcons();
+        }
+        if (this._battler && !this._battler.isEnemy()) {
+            icons = icons.filter(function(element){
+              if(paramShowBuff){
+                if(paramShowDebuff){
+                  return element < 32 || 64 <= element
+                }else{
+                  return element < 32 || 48 <= element
+                }
+              }else{
+                if(paramShowDebuff){
+                  return element < 48 || 64 <= element
+                }else{
+                  return true
+                }
+              }
+            });
         }
         if (!this._icons.equals(icons)) {
             this._icons = icons;
@@ -239,8 +319,6 @@ function Sprite_StateIconChild() {
     Sprite_StateIconChild.prototype.initialize = function() {
         Sprite_StateIcon.prototype.initialize.call(this);
         this.visible     = false;
-        this._turnSprite = null;
-        this._turn       = 0;
     };
 
     Sprite_StateIconChild.prototype.update = function() {};
