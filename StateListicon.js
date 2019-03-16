@@ -6,6 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.1.1 2019/03/16 下ウィンドウに表示できるアイコンを指定できるようになりました。
 // 1.1.0 2019/03/16 バフデバフのアイコンをウィンドウ下に並べる機能を追加。
 // 1.0.2 2019/03/15 味方アイコンをステート数に応じて右にずらす仕様に変更。
 // 1.0.1 2019/03/14 Zレイヤーを追加
@@ -19,6 +20,8 @@
  * @plugindesc Ver1.1.0/ステートアイコンの一部をサイドビューキャラの横に表示します。
  * @author Ritz
  *
+ * @param　バトラー右のアイコン関連
+ *
  * @param StateIconPosX
  * @desc 味方ステートアイコンのx相対位置です。アクターグラフィックの幅の倍率で指定。(Default:0.7)
  * @default 0.7
@@ -26,6 +29,7 @@
  * @decimals 2
  * @max 2
  * @min -1
+ * @parent バトラー右のアイコン関連
  *
  * @param StateIconPosY
  * @desc 味方ステートアイコンのy相対位置です。アクターグラフィックの高さの倍率で指定。(Default:0.5)
@@ -34,6 +38,7 @@
  * @decimals 2
  * @max 2
  * @min -1
+ * @parent バトラー右のアイコン関連
  *
  * @param StateIconZ
  * @desc ステートアイコンのZレイヤーです。0:影より下 1:影より上 2:武器より上 3:キャラより上 4:状態異常アニメより上　(Default:0)
@@ -41,16 +46,26 @@
  * @type number
  * @max 4
  * @min 0
+ * @parent バトラー右のアイコン関連
  *
- * @param ShowBuffInStatusWindow
- * @desc 戦闘中下のウィンドウに、バフ（攻撃力アップなど）のアイコンを表示します。
+ * @param ステータスウィンドウのアイコン関連
+ *
+ * @param ShowBuff
+ * @desc バフ関連アイコン(アイコンID:32-47)を表示します。
  * @default true
  * @type boolean
+ * @parent ステータスウィンドウのアイコン関連
  *
- * @param ShowDebuffInStatusWindow
- * @desc 戦闘中下のウィンドウに、デバフ（攻撃力ダウンなど）のアイコンを表示します。
+ * @param ShowDebuff
+ * @desc デバフ関連アイコン(アイコンID:48-63)を表示します。
  * @default true
  * @type boolean
+ * @parent ステータスウィンドウのアイコン関連
+ *
+ * @param OtherIconID
+ * @desc その他の表示するアイコンIDです。カンマ区切りで指定。(例：2,3,4 の場合、IDが2,3,4のアイコンは下のウィンドウに表示。)
+ * @default
+ * @parent ステータスウィンドウのアイコン関連
  *
  * @help
  * 注意：このプラグインはサイドビューのみに対応しております。
@@ -136,21 +151,25 @@ function Sprite_StateIconChild() {
     var paramStateIconPosX        = getParamFloat(['StateIconPosX']);
     var paramStateIconPosY        = getParamFloat(['StateIconPosY']);
     var paramStateIconZ           = getParamNumber(['StateIconZ'],0,4);
-    var paramIconIDForWin         = getParamArrayNumber(['IconIDForStatusWindow']);
-    var paramShowBuff             = getParamBoolean(['ShowBuffInStatusWindow']);
-    var paramShowDebuff           = getParamBoolean(['ShowDebuffInStatusWindow']);
+    var paramShowBuff             = getParamBoolean(['ShowBuff']);
+    var paramShowDebuff           = getParamBoolean(['ShowDebuff']);
+    var paramOtherIconID          = getParamArrayNumber(['OtherIconID']);
 
-    // var paramWinIDs = [];
-    //
-    // var isIconShownInWindow = function(iconID) {
-    //     if (paramShowBuff && 32 <= iconID && iconID < 48) return true;
-    //     if (paramShowDebuff && 48 <= iconID && iconID < 60) return true;
-    //     // paramIconIDForWin.some(function(id){
-    //     //   return id === iconID;
-    //     // })
-    //     // // if ()
-    //     // return false;
-    // };
+    var paramIconInWindow = (function(){
+      var iconIdInWin = [];
+      if (paramShowBuff) {
+        for (var i = 32; i < 48; i++) {
+          iconIdInWin.push(i);
+        }
+      }
+      if (paramShowDebuff) {
+        for (var i = 48; i < 64; i++) {
+          iconIdInWin.push(i);
+        }
+      }
+      iconIdInWin = iconIdInWin.concat(paramOtherIconID)
+      return iconIdInWin;
+    }());
 
     //=============================================================================
     // Sprite_Actor
@@ -198,19 +217,7 @@ function Sprite_StateIconChild() {
         width = width || 144;
         var icons = actor.allIcons().slice(0, Math.floor(width / Window_Base._iconWidth));
         icons = icons.filter(function(element){
-          if(paramShowBuff){
-            if(paramShowDebuff){
-              return 32 <= element && element < 64
-            }else{
-              return 32 <= element && element < 48
-            }
-          }else{
-            if(paramShowDebuff){
-              return 48 <= element && element < 64
-            }else{
-              return false
-            }
-          }
+            return paramIconInWindow.includes(element);
         });
         for (var i = 0; i < icons.length; i++) {
             this.drawIcon(icons[i], x + Window_Base._iconWidth * i, y + 2);
@@ -245,19 +252,7 @@ function Sprite_StateIconChild() {
         }
         if (this._battler && !this._battler.isEnemy()) {
             icons = icons.filter(function(element){
-              if(paramShowBuff){
-                if(paramShowDebuff){
-                  return element < 32 || 64 <= element
-                }else{
-                  return element < 32 || 48 <= element
-                }
-              }else{
-                if(paramShowDebuff){
-                  return element < 48 || 64 <= element
-                }else{
-                  return true
-                }
-              }
+                return !paramIconInWindow.includes(element);
             });
         }
         if (!this._icons.equals(icons)) {
