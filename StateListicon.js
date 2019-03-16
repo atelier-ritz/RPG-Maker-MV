@@ -6,6 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.1.2 2019/03/16 下ウィンドウのアイコン選択処理のバグを修正。
 // 1.1.1 2019/03/16 下ウィンドウに表示できるアイコンを指定できるようになりました。
 // 1.1.0 2019/03/16 バフデバフのアイコンをウィンドウ下に並べる機能を追加。
 // 1.0.2 2019/03/15 味方アイコンをステート数に応じて右にずらす仕様に変更。
@@ -17,7 +18,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc Ver1.1.1/ステートアイコンの一部をサイドビューキャラの横に表示します。
+ * @plugindesc Ver1.1.2/ステートアイコンの一部をサイドビューキャラの横に表示します。
  * @author Ritz
  *
  * @param　バトラー右のアイコン関連
@@ -215,10 +216,11 @@ function Sprite_StateIconChild() {
     //=============================================================================
     Window_BattleStatus.prototype.drawActorIcons = function(actor, x, y, width) {
         width = width || 144;
-        var icons = actor.allIcons().slice(0, Math.floor(width / Window_Base._iconWidth));
+        var icons = actor.allIcons();
         icons = icons.filter(function(element){
             return paramIconInWindow.includes(element);
         });
+        icons = icons.slice(0, Math.floor(width / Window_Base._iconWidth));
         for (var i = 0; i < icons.length; i++) {
             this.drawIcon(icons[i], x + Window_Base._iconWidth * i, y + 2);
         }
