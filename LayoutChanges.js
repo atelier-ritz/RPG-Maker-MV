@@ -25,13 +25,13 @@
  * @desc 戦闘中先頭バトラーのx座標です。(Default:400)
  * @default 400
  * @type number
- * @parent サイドビューバトラーの位置関連
+ * @parent サイドビュー時バトラーの位置関連
  *
  * @param SVBattlerPosY
  * @desc 戦闘中先頭バトラーのy座標です。(Default:280)
  * @default 280
  * @type number
- * @parent サイドビューバトラーの位置関連
+ * @parent サイドビュー時バトラーの位置関連
  *
  * @param　メッセージウィンドウ関連
  *
