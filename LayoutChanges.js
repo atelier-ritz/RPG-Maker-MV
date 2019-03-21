@@ -6,6 +6,7 @@
 // http://opensource.org/licenses/mit-license.php
 // ----------------------------------------------------------------------------
 // Version
+// 1.1.1 2019/03/21 メニューステータスの表示人数を小数可能にしました。
 // 1.1.0 2019/03/20 メニューステータスのレイアウトを変更する機能を加えました。
 //                  メッセージウィンドウのレイアウトを変更する機能を加えました。
 // 1.0.0 2019/03/14 初版 サイドビューバトラーの位置を変更します
@@ -16,7 +17,7 @@
 
 
 /*:
- * @plugindesc v1.1.0/ゲームの各要素のレイアウトを変更するプラグインです。
+ * @plugindesc v1.1.1/ゲームの各要素のレイアウトを変更するプラグインです。
  * @author Ritz
  *
  * @param　サイドビュー時バトラーの位置関連
@@ -47,9 +48,10 @@
  * @param　パーティステータス関連
  *
  * @param NumVisibleMembers
- * @desc 一画面に表示するパーティメンバーの数です。(Default:4)
+ * @desc 一画面に表示するパーティメンバーの数です。小数可。(Default:4)
  * @default 4
- * @type number
+ * @decimal 2
+ * @type float
  * @min 1
  * @max 5
  * @parent パーティステータス関連
@@ -119,7 +121,7 @@
   var paramSVBattlerPosX            = getParamNumber(['SVBattlerPosX']);
   var paramSVBattlerPosY            = getParamNumber(['SVBattlerPosY']);
   var paramMessageWindowWidthRatio  = getParamFloat(['MessageWindowWidthRatio']);
-  var paramNumVisibleMembers        = getParamNumber(['NumVisibleMembers']);
+  var paramNumVisibleMembers        = getParamFloat(['NumVisibleMembers']);
   var paramXOffsetFaces             = getParamNumber(['XOffsetFaces']);
   var paramYOffsetFaces             = getParamNumber(['YOffsetFaces']);
   var paramXOffsetActorInfo         = getParamNumber(['XOffsetActorInfo']);
