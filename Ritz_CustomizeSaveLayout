@@ -1,0 +1,158 @@
+//-----------------------------------------------------------------------------
+// Window_SavefileList
+//
+// The window for selecting a save file on the save and load screens.
+
+
+//=============================================================================
+// Ritz_CustomizeSaveLayout.js
+// ----------------------------------------------------------------------------
+// Copyright (c) 2019 Ritz
+// This software is released under the MIT License.
+// http://opensource.org/licenses/mit-license.php
+// ----------------------------------------------------------------------------
+// Version
+// 1.0.0 2016/03/19 Initial Commit
+// ----------------------------------------------------------------------------
+// [Twitter]: https://twitter.com/atelier_ritz/
+// [GitHub] : https://github.com/atelier-ritz/
+//=============================================================================
+/*:
+ * @plugindesc Change the layout of save scene.
+ * @author Ritz
+ *
+ * @param SaveFileNumber
+ * @desc セーブファイル数
+ * @default 20
+ *
+ * @help 最大存檔數量透過參數指定來變更。
+ *
+ * This plugin has no command.
+ *
+ * 利用規約：
+ *  作者に無断で改変、再配布が可能で、利用形態（商用、18禁利用等）
+ *  についても制限はありません。
+ *  このプラグインはもうあなたのものです。
+ */
+(function() {
+    'use strict';
+    var pluginName = 'Ritz_CustomizeSaveLayout';
+
+    var getParamNumber = function(paramNames, min, max) {
+        var value = getParamOther(paramNames);
+        if (arguments.length < 2) min = -Infinity;
+        if (arguments.length < 3) max = Infinity;
+        return (parseInt(value, 10) || 0).clamp(min, max);
+    };
+
+    var getParamOther = function(paramNames) {
+        if (!Array.isArray(paramNames)) paramNames = [paramNames];
+        for (var i = 0; i < paramNames.length; i++) {
+            var name = PluginManager.parameters(pluginName)[paramNames[i]];
+            if (name) return name;
+        }
+        return null;
+    };
+
+    var paramSaveFileNumber = getParamNumber(['SaveFileNumber', 'セーブファイル数'], 0);
+
+})();
+
+
+
+
+function Window_SavefileList() {
+    this.initialize.apply(this, arguments);
+}
+
+Window_SavefileList.prototype = Object.create(Window_Selectable.prototype);
+Window_SavefileList.prototype.constructor = Window_SavefileList;
+
+Window_SavefileList.prototype.initialize = function(x, y, width, height) {
+    Window_Selectable.prototype.initialize.call(this, x, y, width, height);
+    this.activate();
+    this._mode = null;
+};
+
+Window_SavefileList.prototype.setMode = function(mode) {
+    this._mode = mode;
+};
+
+Window_SavefileList.prototype.maxItems = function() {
+    return DataManager.maxSavefiles();
+};
+
+Window_SavefileList.prototype.maxVisibleItems = function() {
+    return 5;
+};
+
+Window_SavefileList.prototype.itemHeight = function() {
+    var innerHeight = this.height - this.padding * 2;
+    return Math.floor(innerHeight / this.maxVisibleItems());
+};
+
+Window_SavefileList.prototype.drawItem = function(index) {
+    var id = index + 1;
+    var valid = DataManager.isThisGameFile(id);
+    var info = DataManager.loadSavefileInfo(id);
+    var rect = this.itemRectForText(index);
+    this.resetTextColor();
+    if (this._mode === 'load') {
+        this.changePaintOpacity(valid);
+    }
+    this.drawFileId(id, rect.x, rect.y);
+    if (info) {
+        this.changePaintOpacity(valid);
+        this.drawContents(info, rect, valid);
+        this.changePaintOpacity(true);
+    }
+};
+
+Window_SavefileList.prototype.drawFileId = function(id, x, y) {
+    if (DataManager.isAutoSaveFileId(id)) {
+        if (this._mode === 'save') {
+            this.changePaintOpacity(false);
+        }
+        this.drawText(TextManager.file + ' ' + id + '(Auto)', x, y, 180);
+    } else {
+        this.drawText(TextManager.file + ' ' + id, x, y, 180);
+    }
+};
+
+Window_SavefileList.prototype.drawContents = function(info, rect, valid) {
+    var bottom = rect.y + rect.height;
+    if (rect.width >= 420) {
+        this.drawGameTitle(info, rect.x + 192, rect.y, rect.width - 192);
+        if (valid) {
+            this.drawPartyCharacters(info, rect.x + 220, bottom - 4);
+        }
+    }
+    var lineHeight = this.lineHeight();
+    var y2 = bottom - lineHeight;
+    if (y2 >= lineHeight) {
+        this.drawPlaytime(info, rect.x, y2, rect.width);
+    }
+};
+
+Window_SavefileList.prototype.drawGameTitle = function(info, x, y, width) {
+    if (info.title) {
+        this.drawText(info.title, x, y, width);
+    }
+};
+
+Window_SavefileList.prototype.drawPartyCharacters = function(info, x, y) {
+    if (info.characters) {
+        for (var i = 0; i < info.characters.length; i++) {
+            var data = info.characters[i];
+            this.drawCharacter(data[0], data[1], x + i * 48, y);
+        }
+    }
+};
+
+Window_SavefileList.prototype.drawPlaytime = function(info, x, y, width) {
+    if (info.playtime) {
+        this.drawText(info.playtime, x, y, width, 'right');
+    }
+};
+
+Window_SavefileList.prototype.playOkSound = function() {};
